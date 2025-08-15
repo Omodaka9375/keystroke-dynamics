@@ -36,7 +36,7 @@ Keystroke dynamics analyzes the unique patterns in how you type - the timing bet
     <button id="loginBtn">Login</button>
     
     <!-- Include the scripts -->
-    <script src="keystroke-dynamics.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/keystroke-dynamics@latest/keystroke-dynamics.min.js"></script>
     <script src="your-app.js"></script>
 </body>
 </html>
