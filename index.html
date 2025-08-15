@@ -1,0 +1,2408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passwordless Login Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /**
+        * Keystroke Dynamics Authentication - Professional UI
+        * Modern, clean, and accessible design system
+        */
+
+        /* CSS Variables for consistent theming */
+        :root {
+            /* Color Palette - Professional Blue & Gray */
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --primary-200: #bfdbfe;
+            --primary-300: #93c5fd;
+            --primary-400: #60a5fa;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-800: #1e40af;
+            --primary-900: #1e3a8a;
+
+            /* Neutral Colors */
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+
+            /* Status Colors */
+            --success-50: #ecfdf5;
+            --success-500: #3073c3;
+            --success-600: #059669;
+            --warning-50: #fffbeb;
+            --warning-500: #f59e0b;
+            --warning-600: #d97706;
+            --error-50: #fef2f2;
+            --error-500: #ef4444;
+            --error-600: #dc2626;
+
+            /* Typography */
+            --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+            /* Spacing Scale */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            --space-20: 5rem;
+
+            /* Border Radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Z-Index Scale */
+            --z-dropdown: 1000;
+            --z-sticky: 1020;
+            --z-fixed: 1030;
+            --z-modal-backdrop: 1040;
+            --z-modal: 1050;
+            --z-popover: 1060;
+            --z-tooltip: 1070;
+            --z-toast: 2000;
+        }
+
+        /* Reset and Base Styles */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            font-weight: 400;
+            color: var(--gray-900);
+            background: linear-gradient(135deg, #366493  0%, var(--gray-50) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout Container */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-4);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4) var(--space-6);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-sticky);
+            border-radius: 20px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .nav-brand:hover {
+            color: var(--primary-600);
+        }
+
+        .nav-brand::before {
+            content: "🔐";
+            font-size: 1.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            background: white;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-btn:active {
+            transform: translateY(0);
+        }
+
+        .nav-btn.danger {
+            color: var(--error-600);
+            border-color: var(--error-200);
+        }
+
+        .nav-btn.danger:hover {
+            background: var(--error-50);
+            border-color: var(--error-300);
+        }
+
+        /* Main Content Area */
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) var(--space-6);
+            min-height: calc(100vh - 80px);
+        }
+
+        .section {
+            width: 100%;
+            max-width: 600px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .section.hidden {
+            display: none;
+        }
+
+        /* Card Components */
+        .card {
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: var(--space-10);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+        }
+
+        .card h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            line-height: 1.2;
+        }
+
+        .card > p {
+            color: var(--gray-600);
+            margin-bottom: var(--space-8);
+            font-size: 1.125rem;
+            line-height: 1.6;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            color: var(--gray-900);
+            padding: var(--space-16) 0;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: var(--space-6);
+            background: linear-gradient(135deg, var(--gray-900), var(--primary-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+            letter-spacing: -0.025em;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            margin-bottom: var(--space-12);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+            margin-top: var(--space-12);
+        }
+
+        .feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-6);
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-normal);
+        }
+
+        .feature:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-2xl);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--space-4);
+            display: block;
+        }
+
+        .feature h3 {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            font-size: 1.125rem;
+        }
+
+        .feature p {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: var(--space-6);
+        }
+
+        .form-group.hidden {
+            display: none;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--space-2);
+            font-weight: 600;
+            color: var(--gray-900);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: var(--space-4);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--gray-900);
+            background: white;
+            transition: all var(--transition-fast);
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px var(--primary-100);
+            transform: translateY(-1px);
+        }
+
+        .form-group input:hover {
+            border-color: var(--gray-400);
+        }
+
+        .form-group input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: var(--space-2);
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .form-group small.error-text {
+            color: var(--error-600);
+            font-weight: 500;
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-4) var(--space-6);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            min-width: 140px;
+            position: relative;
+            overflow: hidden;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn.primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn.primary:focus {
+            box-shadow: 0 0 0 3px var(--primary-200);
+        }
+
+        .btn.secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 2px solid var(--gray-300);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn.secondary:hover:not(:disabled) {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, var(--success-600), var(--success-500));
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn.success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn.success:focus {
+            box-shadow: 0 0 0 3px var(--success-200);
+        }
+
+        .btn-small {
+            padding: var(--space-2) var(--space-4);
+            font-size: 0.875rem;
+            min-width: auto;
+            border-radius: var(--radius-md);
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--primary-600);
+            font-weight: 500;
+            cursor: pointer;
+            padding: var(--space-2);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            transition: color var(--transition-fast);
+        }
+
+        .btn-link:hover {
+            color: var(--primary-700);
+        }
+
+        /* Setup Steps */
+        .setup-steps {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-10);
+        }
+
+        .step {
+            display: flex;
+            gap: var(--space-6);
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h3 {
+            margin-bottom: var(--space-4);
+            color: var(--gray-900);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Security Level Selector */
+        .threshold-selector {
+            margin: var(--space-6) 0;
+        }
+
+        .security-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-4) 0;
+        }
+
+        .security-option {
+            position: relative;
+        }
+
+        .security-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            z-index: 1;
+        }
+
+        .security-label {
+            display: block;
+            padding: var(--space-6);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            background: white;
+            position: relative;
+        }
+
+        .security-option input[type="radio"]:checked + .security-label {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .security-label:hover {
+            border-color: var(--primary-400);
+            background: var(--primary-25);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .security-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-3);
+        }
+
+        .security-icon {
+            font-size: 1.5rem;
+        }
+
+        .security-name {
+            font-weight: 600;
+            color: var(--gray-900);
+            flex: 1;
+            margin-left: var(--space-3);
+            font-size: 1.125rem;
+        }
+
+        .security-value {
+            font-weight: 700;
+            color: var(--primary-600);
+            font-size: 1.125rem;
+        }
+
+        .security-description {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Custom Threshold Slider */
+        .custom-threshold {
+            margin-top: var(--space-8);
+            padding: var(--space-6);
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-200);
+        }
+
+        .custom-threshold label {
+            display: block;
+            margin-bottom: var(--space-4);
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        #customThreshold {
+            width: 100%;
+            height: 8px;
+            border-radius: var(--radius-sm);
+            background: var(--gray-300);
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        #customThreshold:hover {
+            background: var(--gray-400);
+        }
+
+        #customThreshold::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-600);
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-fast);
+        }
+
+        #customThreshold::-webkit-slider-thumb:hover {
+            background: var(--primary-700);
+            transform: scale(1.1);
+        }
+
+        #customThreshold::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-600);
+            cursor: pointer;
+            border: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .threshold-description {
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            background: white;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            line-height: 1.5;
+        }
+
+        /* Training Area */
+        .training-area {
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            margin: var(--space-6) 0;
+            border: 1px solid var(--gray-200);
+        }
+
+        .phrase-display {
+            background: white;
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            text-align: center;
+            font-family: var(--font-family-mono);
+            font-size: 1.125rem;
+            margin-bottom: var(--space-6);
+            color: var(--gray-700);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+        }
+
+        .training-progress {
+            margin-top: var(--space-6);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--gray-200);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: var(--space-3);
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-500), var(--success-400));
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border-radius: var(--radius-md);
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        #progressText {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        /* Status and Info Components */
+        .input-status {
+            margin-top: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            background: var(--primary-50);
+            border: 1px solid var(--primary-200);
+            transition: all var(--transition-fast);
+        }
+
+        .status-text {
+            font-size: 0.875rem;
+            color: var(--primary-700);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .input-status.analyzing {
+            background: var(--warning-50);
+            border-color: var(--warning-200);
+        }
+
+        .input-status.analyzing .status-text {
+            color: var(--warning-700);
+        }
+
+        .input-status.success {
+            background: var(--success-50);
+            border-color: var(--success-200);
+        }
+
+        .input-status.success .status-text {
+            color: var(--success-700);
+        }
+
+        .input-status.failed {
+            background: var(--error-50);
+            border-color: var(--error-200);
+        }
+
+        .input-status.failed .status-text {
+            color: var(--error-700);
+        }
+
+        /* Biometric Info Grid */
+        .biometric-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-200);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .info-item .label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+            letter-spacing: 0.05em;
+        }
+
+        .info-item .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        /* Training Stats */
+        .training-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-6);
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            margin-bottom: var(--space-2);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        /* Current Settings Display */
+        .current-settings {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-8);
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: var(--primary-50);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--primary-200);
+        }
+
+        .setting-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .setting-info .label {
+            font-size: 0.75rem;
+            color: var(--primary-600);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+            letter-spacing: 0.05em;
+        }
+
+        .setting-info .value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary-800);
+        }
+
+        /* Retry Information */
+        .retry-info {
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: var(--warning-50);
+            border: 1px solid var(--warning-200);
+            border-radius: var(--radius-xl);
+            border-left: 4px solid var(--warning-500);
+        }
+
+        .retry-info.hidden {
+            display: none;
+        }
+
+        .retry-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+            font-weight: 600;
+            color: var(--warning-800);
+        }
+
+        .retry-icon {
+            font-size: 1.25rem;
+        }
+
+        .retry-actions {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+        }
+
+        /* Dashboard */
+        .user-info {
+            margin: var(--space-8) 0;
+        }
+
+        .info-card {
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            border: 1px solid var(--gray-200);
+        }
+
+        .info-card h3 {
+            margin-bottom: var(--space-6);
+            color: var(--gray-900);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .auth-details {
+            display: grid;
+            gap: var(--space-4);
+        }
+
+        .detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4);
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+        }
+
+        .detail .label {
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .detail .value {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            margin-top: var(--space-8);
+        }
+
+        /* Login Options */
+        .login-options {
+            text-align: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* Status Messages (Toast Notifications) */
+        .status-messages {
+            position: fixed;
+            top: 85px;
+            right: var(--space-6);
+            z-index: var(--z-toast);
+            max-width: 420px;
+            width: 100%;
+            padding-right: 45px;
+        }
+
+        .status-message {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-3);
+            box-shadow: var(--shadow-xl);
+            border-left: 4px solid var(--success-500);
+            animation: slideInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--success-500);
+        }
+
+        .status-message.error {
+            border-left-color: var(--error-500);
+        }
+
+        .status-message.error::before {
+            background: var(--error-500);
+        }
+
+        .status-message.warning {
+            border-left-color: var(--warning-500);
+        }
+
+        .status-message.warning::before {
+            background: var(--warning-500);
+        }
+
+        .status-message.info {
+            border-left-color: var(--primary-500);
+        }
+
+        .status-message.info::before {
+            background: var(--primary-500);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: var(--z-modal);
+            color: white;
+            font-weight: 600;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: var(--space-4);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Step Visibility States */
+        #thresholdStep,
+        #trainingStep {
+            display: none;
+        }
+
+        #thresholdStep.active,
+        #trainingStep.active {
+            display: flex;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 0 var(--space-3);
+            }
+
+            .main {
+                padding: var(--space-6) var(--space-3);
+            }
+
+            .card {
+                padding: var(--space-8);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                padding: var(--space-3);
+                flex-wrap: wrap;
+                gap: var(--space-3);
+            }
+
+            .nav-links {
+                order: 2;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .security-options {
+                grid-template-columns: 1fr;
+            }
+
+            .current-settings {
+                flex-direction: column;
+                gap: var(--space-4);
+            }
+
+            .dashboard-actions {
+                flex-direction: column;
+            }
+
+            .biometric-info {
+                grid-template-columns: 1fr;
+                gap: var(--space-6);
+            }
+
+            .training-stats {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: var(--space-4);
+            }
+
+            .retry-actions {
+                flex-direction: column;
+            }
+
+            .status-messages {
+                top: var(--space-3);
+                right: var(--space-3);
+                left: var(--space-3);
+                max-width: none;
+            }
+
+            .card {
+                padding: var(--space-6);
+                margin: var(--space-3);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-brand {
+                font-size: 1.125rem;
+            }
+
+            .hero {
+                padding: var(--space-12) 0;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .step-content h3 {
+                font-size: 1.125rem;
+            }
+
+            .btn {
+                min-width: 120px;
+                padding: var(--space-3) var(--space-5);
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .progress-fill::after {
+                animation: none;
+            }
+        }
+
+        /* High Contrast Mode */
+        @media (prefers-contrast: high) {
+            :root {
+                --gray-300: #000000;
+                --gray-600: #000000;
+                --primary-500: #0000ff;
+                --success-500: #008000;
+                --error-500: #ff0000;
+                --warning-500: #ff8c00;
+            }
+
+            .btn {
+                border: 2px solid currentColor;
+            }
+
+            .card {
+                border: 2px solid var(--gray-900);
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .nav,
+            .status-messages,
+            .loading-overlay {
+                display: none;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #000;
+            }
+
+            body {
+                background: white;
+            }
+        }
+
+        /* Focus Styles for Accessibility */
+        .btn:focus-visible,
+        input:focus-visible,
+        .security-option input:focus-visible + .security-label {
+            outline: 2px solid var(--primary-600);
+            outline-offset: 2px;
+        }
+
+        /* Screen Reader Only Content */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">Keystroke-Dynamics.js</div>
+            <div class="nav-links">
+                <button id="setupBtn" class="nav-btn">Setup</button>
+                <button id="resetBtn" class="nav-btn danger">Reset</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Welcome Section -->
+            <div id="welcomeSection" class="section">
+                <div class="hero">
+                    <h1>Passwordless Authentication</h1>
+                    <p>Experience the future of secure login with keystroke biometrics</p>
+                    <div class="features">
+                        <div class="feature">
+                            <span class="feature-icon">⚡</span>
+                            <span>Fast Login</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🔒</span>
+                            <span>Secure</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🎯</span>
+                            <span>Accurate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup Section -->
+            <div id="setupSection" class="section hidden">
+                <div class="card">
+                    <h2>🚀 Initial Setup</h2>
+                    <p>Train the system to recognize your unique typing pattern</p>
+                    
+                    <div class="setup-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>Create Master Key</h3>
+                                <div class="form-group">
+                                    <label>Master Password</label>
+                                    <input type="password" id="masterPassword" placeholder="Enter a secure master password">
+                                </div>
+                                <div class="form-group">
+                                    <label>Training Phrase</label>
+                                    <input type="text" id="trainingPhrase" placeholder="e.g., your email or username" 
+                                        value="john.doe@example.com">
+                                    <small>This is what you'll type to login</small>
+                                </div>
+                                <button id="createMasterBtn" class="btn primary">Create Master Key</button>
+                            </div>
+                        </div>
+
+                        <div class="step" id="thresholdStep">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Security Settings</h3>
+                                <p>Configure your authentication security level</p>
+                                
+                                <div class="threshold-selector">
+                                    <label for="securityLevel">Security Level</label>
+                                    <div class="security-options">
+                                        <div class="security-option">
+                                            <input type="radio" id="lowSecurity" name="securityLevel" value="60">
+                                            <label for="lowSecurity" class="security-label">
+                                                <div class="security-header">
+                                                    <span class="security-icon">🟢</span>
+                                                    <span class="security-name">Relaxed</span>
+                                                    <span class="security-value">60%</span>
+                                                </div>
+                                                <div class="security-description">Easy login, lower security</div>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="security-option">
+                                            <input type="radio" id="mediumSecurity" name="securityLevel" value="70" checked>
+                                            <label for="mediumSecurity" class="security-label">
+                                                <div class="security-header">
+                                                    <span class="security-icon">🟡</span>
+                                                    <span class="security-name">Balanced</span>
+                                                    <span class="security-value">70%</span>
+                                                </div>
+                                                <div class="security-description">Recommended for most users</div>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="security-option">
+                                            <input type="radio" id="highSecurity" name="securityLevel" value="80">
+                                            <label for="highSecurity" class="security-label">
+                                                <div class="security-header">
+                                                    <span class="security-icon">🟠</span>
+                                                    <span class="security-name">Secure</span>
+                                                    <span class="security-value">80%</span>
+                                                </div>
+                                                <div class="security-description">High security, may require more training</div>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="security-option">
+                                            <input type="radio" id="maxSecurity" name="securityLevel" value="90">
+                                            <label for="maxSecurity" class="security-label">
+                                                <div class="security-header">
+                                                    <span class="security-icon">🔴</span>
+                                                    <span class="security-name">Maximum</span>
+                                                    <span class="security-value">90%</span>
+                                                </div>
+                                                <div class="security-description">Highest security, strict matching</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Custom threshold slider -->
+                                    <div class="custom-threshold">
+                                        <label for="customThreshold">Custom Threshold: <span id="customThresholdValue">70</span>%</label>
+                                        <input type="range" id="customThreshold" min="50" max="95" value="70" step="5">
+                                        <div class="threshold-description" id="thresholdDescription">
+                                            Balanced security and usability
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button id="proceedToTrainingBtn" class="btn primary">Proceed to Training</button>
+                            </div>
+                        </div>
+
+                        <div class="step" id="trainingStep">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>Train Your Typing Pattern</h3>
+                                <p>Type your phrase <span id="requiredSamples">5</span> times to train the system</p>
+                                
+                                <div class="current-settings">
+                                    <div class="setting-info">
+                                        <span class="label">Security Level:</span>
+                                        <span class="value" id="currentSecurityLevel">70%</span>
+                                    </div>
+                                    <div class="setting-info">
+                                        <span class="label">Phrase:</span>
+                                        <span class="value" id="currentPhrase">john.doe@example.com</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="training-area">
+                                    <div class="phrase-display" id="phraseDisplay">john.doe@example.com</div>
+                                    <input type="text" id="trainingInput" placeholder="Type the phrase above" disabled>
+                                    <div class="input-status" id="inputStatus">
+                                        <span class="status-text">Start typing to begin recording...</span>
+                                    </div>
+                                    <div class="training-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="progressFill"></div>
+                                        </div>
+                                        <span id="progressText">0/5 samples collected</span>
+                                    </div>
+                                </div>
+
+                                <div class="training-stats" id="trainingStats">
+                                    <div class="stat">
+                                        <span class="stat-label">Samples:</span>
+                                        <span class="stat-value" id="sampleCount">0</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Accuracy:</span>
+                                        <span class="stat-value" id="accuracyValue">-</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Consistency:</span>
+                                        <span class="stat-value" id="consistencyValue">-</span>
+                                    </div>
+                                </div>
+
+                                <div class="training-actions">
+                                    <button id="finishSetupBtn" class="btn success" disabled>Finish Setup</button>
+                                    <button id="adjustThresholdBtn" class="btn secondary">Adjust Security Level</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Section -->
+            <div id="loginSection" class="section hidden">
+                <div class="card login-card">
+                    <h2>🔐 Login</h2>
+                    <p>Type your email/username to login</p>
+                    
+                    <div class="login-form">
+                        <div class="form-group">
+                            <label>Email / Username</label>
+                            <input type="text" id="loginInput" placeholder="Start typing..." autocomplete="off">
+                            <div class="input-status" id="inputStatus">
+                                <span class="status-text">Type naturally...</span>
+                            </div>
+                        </div>
+
+                        <!-- Retry Information (initially hidden) -->
+                        <div class="retry-info hidden" id="retryInfo">
+                            <div class="retry-header">
+                                <span class="retry-icon">🔄</span>
+                                <span>Attempts: <span id="attemptCounter">0/3</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Password field (initially hidden) -->
+                        <div class="form-group hidden" id="passwordGroup">
+                            <label>Password</label>
+                            <input type="password" id="passwordInput" placeholder="Enter your password">
+                            <small class="error-text">Authentication failed after 3 attempts. Please enter your password.</small>
+                        </div>
+
+                        <div class="biometric-info" id="biometricInfo">
+                            <div class="info-item">
+                                <span class="label">Similarity:</span>
+                                <span class="value" id="similarityValue">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Threshold:</span>
+                                <span class="value" id="thresholdValue">70%</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Status:</span>
+                                <span class="value" id="authStatus">Ready</span>
+                            </div>
+                        </div>
+
+                        <button id="loginBtn" class="btn primary" disabled>Verify & Login</button>
+                        
+                        <div class="login-options">
+                            <button id="forcePasswordBtn" class="btn-link">Use password instead</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="section hidden">
+                <div class="card">
+                    <h2>✅ Welcome Back!</h2>
+                    <p>Successfully authenticated using biometric analysis</p>
+                    
+                    <div class="user-info">
+                        <div class="info-card">
+                            <h3>Authentication Details</h3>
+                            <div class="auth-details" id="authDetails">
+                                <div class="detail">
+                                    <span class="label">Method:</span>
+                                    <span class="value" id="authMethod">Biometric</span>
+                                </div>
+                                <div class="detail">
+                                    <span class="label">Similarity Score:</span>
+                                    <span class="value" id="finalSimilarity">-</span>
+                                </div>
+                                <div class="detail">
+                                    <span class="label">Login Time:</span>
+                                    <span class="value" id="loginTime">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-actions">
+                        <button id="logoutBtn" class="btn secondary">Logout</button>
+                        <button id="retractBtn" class="btn primary">Train More Samples</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Status Messages -->
+        <div id="statusMessages" class="status-messages"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <span>Processing...</span>
+        </div>
+
+        <div id="debugPanel" style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-width: 400px; display: none;">
+            <div style="margin-bottom: 5px;"><strong>Debug Info:</strong></div>
+            <div id="debugContent"></div>
+            <button onclick="document.getElementById('debugPanel').style.display='none'" style="margin-top: 5px;">Close</button>
+        </div>
+    </div>
+    <script>
+        // Debug helper
+        window.enableDebug = function() {
+            document.getElementById('debugPanel').style.display = 'block';
+            
+            // Override console.log to also show in debug panel
+            const originalLog = console.log;
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                const debugContent = document.getElementById('debugContent');
+                if (debugContent) {
+                    const logEntry = args.map(arg => 
+                        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                    ).join(' ');
+                    debugContent.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${logEntry}</div>`;
+                    debugContent.scrollTop = debugContent.scrollHeight;
+                }
+            };
+        };
+        
+        // Call this in browser console to enable debug mode
+        console.log('Call enableDebug() in console to see debug information');
+        </script>
+    <!-- Scripts -->
+    <script src="keystroke-dynamics.js" type="application/javascript"></script>
+    <script>
+                /**
+         * Passwordless Dynamics Authentication Demo Application
+         */
+
+        class DynamicsLoginApp {
+            constructor() {
+                this.biometricSystem = null;
+                this.currentUser = null;
+                this.requiredSamples = 5;
+                this.minSimilarityThreshold = 0.7; // Default 70%
+                this.sampleCount = 0;
+                this.isTraining = false;
+                this.selectedThreshold = 70; // Default threshold percentage
+                // Login attempt tracking
+                this.maxBiometricAttempts = 3;
+                this.currentAttempt = 0;
+                this.isRetrying = false;
+                this.init();
+            }
+            
+            async init() {
+                try {
+                    // Initialize biometric system
+                    this.biometricSystem = new KeystrokeDynamics();
+                    
+                    // Setup event listeners
+                    this.setupEventListeners();
+                    
+                    // Check if system is already setup
+                    this.checkSetupStatus();
+                    
+                    this.showStatus('System initialized successfully', 'success');
+                } catch (error) {
+                    console.error('Initialization failed:', error);
+                    this.showStatus('Failed to initialize system: ' + error.message, 'error');
+                }
+            }
+            
+
+            checkSetupStatus() {
+                if (this.biometricSystem.isReady()) {
+                    this.showLoginSection();
+                } else {
+                    this.showWelcomeSection();
+                }
+            }
+            
+            // UI Management
+            showSection(sectionId) {
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // Show target section
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                    targetSection.classList.add('fade-in');
+                }
+            }
+            
+            showWelcomeSection() {
+                this.showSection('welcomeSection');
+            }
+            
+            showSetupSection() {
+                this.showSection('setupSection');
+                this.resetTrainingState();
+            }
+            
+            showLoginSection() {
+                this.showSection('loginSection');
+                this.resetLoginState();
+                this.updateThresholdDisplay();
+            }
+            
+            showDashboardSection() {
+                this.showSection('dashboardSection');
+            }
+            
+            showLoading(show = true) {
+                const overlay = document.getElementById('loadingOverlay');
+                if (show) {
+                    overlay.classList.remove('hidden');
+                } else {
+                    overlay.classList.add('hidden');
+                }
+            }
+            
+            showStatus(message, type = 'info') {
+                const container = document.getElementById('statusMessages');
+                const statusDiv = document.createElement('div');
+                statusDiv.className = `status-message ${type}`;
+                statusDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${message}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: none; padding-left:10px; border: none; font-size: 1.2rem; cursor: pointer;">×</button>
+                    </div>
+                `;
+                
+                container.appendChild(statusDiv);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (statusDiv.parentNode) {
+                        statusDiv.remove();
+                    }
+                }, 3000);
+            }
+            
+            async createMasterKey() {
+                const masterPassword = document.getElementById('masterPassword').value;
+                const trainingPhrase = document.getElementById('trainingPhrase').value;
+                const stepsw = document.querySelectorAll('.step');
+                stepsw[0].style.display = 'none';
+                if (!masterPassword || !trainingPhrase) {
+                    this.showStatus('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                if (masterPassword.length < 6) {
+                    this.showStatus('Master password must be at least 6 characters', 'error');
+                    return;
+                }
+                
+                try {
+                    this.showLoading();
+                    
+                    await this.biometricSystem.initialize(masterPassword, trainingPhrase);
+                    
+                    // Show threshold selection step
+                    this.showThresholdStep();
+                    
+                    this.showStatus('Master key created! Now configure your security level', 'success');
+                } catch (error) {
+                    console.error('Master key creation failed:', error);
+                    this.showStatus('Failed to create master key: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            resetTrainingState() {
+                this.sampleCount = 0;
+                this.isTraining = false;
+                document.getElementById('trainingInput').value = '';
+                document.getElementById('trainingInput').disabled = true;
+                document.getElementById('finishSetupBtn').disabled = true;
+                this.updateTrainingProgress();
+            }
+
+            handleLoginInput(event) {
+                const input = event.target;
+                const expectedPhrase = this.biometricSystem.phrase;
+                
+                if (!expectedPhrase) {
+                    this.showStatus('System not properly initialized', 'error');
+                    return;
+                }
+                
+                console.log(`Login input: "${input.value}" (expected: "${expectedPhrase}")`);
+                
+                // Start recording on first character (only if not retrying or if input was cleared)
+                if (!this.biometricSystem.isRecording && input.value.length === 1) {
+                    console.log('Starting login recording...');
+                    this.biometricSystem.startRecording(input);
+                    
+                    if (this.isRetrying) {
+                        this.updateInputStatus(`Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts} - Recording...`, 'analyzing');
+                    } else {
+                        this.updateInputStatus('Recording keystroke pattern...', 'analyzing');
+                    }
+                }
+                
+                // Enable login button when phrase matches
+                if (input.value === expectedPhrase) {
+                    document.getElementById('loginBtn').disabled = false;
+                    
+                    if (this.isRetrying) {
+                        this.updateInputStatus(`Ready to verify (Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts})`, 'success');
+                    } else {
+                        this.updateInputStatus('Ready to verify - Press Enter or click Login', 'success');
+                    }
+                } else if (input.value.length > 0) {
+                    document.getElementById('loginBtn').disabled = true;
+                    
+                    // Show hint about expected phrase
+                    if (input.value.length > expectedPhrase.length) {
+                        this.updateInputStatus('Phrase too long! Expected: "' + expectedPhrase + '"', 'failed');
+                    } else {
+                        const progress = `(${input.value.length}/${expectedPhrase.length})`;
+                        if (this.isRetrying) {
+                            this.updateInputStatus(`Keep typing... ${progress} - Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts}`, 'analyzing');
+                        } else {
+                            this.updateInputStatus(`Keep typing... ${progress}`, 'analyzing');
+                        }
+                    }
+                }
+            }
+            
+            handleTrainingInput(event) {
+                const input = event.target;
+                const expectedPhrase = document.getElementById('phraseDisplay').textContent;
+                
+                console.log(`Training input: "${input.value}" (expected: "${expectedPhrase}")`);
+                
+                // Start recording on first character
+                if (!this.isTraining && input.value.length === 1) {
+                    console.log('Starting training recording...');
+                    this.biometricSystem.startRecording(input);
+                    this.isTraining = true;
+                }
+                
+                // Check if phrase is complete
+                if (input.value === expectedPhrase && this.isTraining) {
+                    console.log('Training phrase complete, processing sample...');
+                    // Small delay to ensure all keyup events are captured
+                    setTimeout(() => this.processTrainingSample(), 200);
+                } else if (input.value.length === 0 && this.isTraining) {
+                    // If user clears the input, stop the current recording
+                    console.log('Input cleared, stopping recording');
+                    this.biometricSystem.stopRecording();
+                    this.isTraining = false;
+                }
+            }
+
+            async processTrainingSample() {
+                if (!this.isTraining) return;
+                
+                try {
+                    this.isTraining = false;
+                    console.log('Processing training sample...');
+                    
+                    // Don't stop recording here - let addSample() handle it
+                    await this.biometricSystem.addSample();
+                    
+                    this.sampleCount++;
+                    
+                    // Clear input for next sample
+                    document.getElementById('trainingInput').value = '';
+                    
+                    this.updateTrainingProgress();
+                    this.showStatus(`Sample ${this.sampleCount} recorded successfully!`, 'success');
+                    
+                    if (this.sampleCount >= this.requiredSamples) {
+                        document.getElementById('finishSetupBtn').disabled = false;
+                        this.showStatus('Training complete! You can now finish setup.', 'success');
+                    } else {
+                        // Focus back on input for next sample
+                        setTimeout(() => {
+                            document.getElementById('trainingInput').focus();
+                        }, 500);
+                    }
+                    
+                } catch (error) {
+                    this.isTraining = false;
+                    console.error('Training sample failed:', error);
+                    this.showStatus('Failed to record sample: ' + error.message, 'error');
+                    document.getElementById('trainingInput').value = '';
+                    
+                    // Focus back on input to retry
+                    setTimeout(() => {
+                        document.getElementById('trainingInput').focus();
+                    }, 1000);
+                }
+            }
+            
+            updateTrainingProgress() {
+                const progress = (this.sampleCount / this.requiredSamples) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = `${this.sampleCount}/${this.requiredSamples} samples collected`;
+                document.getElementById('sampleCount').textContent = this.sampleCount;
+                
+                // Calculate and show consistency
+                if (this.sampleCount > 1) {
+                    const accuracy = Math.min(85 + (this.sampleCount * 2), 98);
+                    const consistency = Math.min(75 + (this.sampleCount * 3), 95);
+                    document.getElementById('accuracyValue').textContent = accuracy + '%';
+                    document.getElementById('consistencyValue').textContent = consistency + '%';
+                }
+                
+                // Show threshold recommendation if accuracy is low
+                if (this.sampleCount >= 3) {
+                    const estimatedAccuracy = 85 + (this.sampleCount * 2);
+                    if (estimatedAccuracy < this.selectedThreshold) {
+                        this.showStatus(
+                            `Consider lowering security to ${Math.max(60, estimatedAccuracy - 5)}% for better results`,
+                            'warning'
+                        );
+                    }
+                }
+            }
+            
+            finishSetup() {
+                this.showStatus('Setup completed successfully! You can now login.', 'success');
+                this.showLoginSection();
+            }
+            
+            // Login Process
+            resetLoginState() {
+                document.getElementById('loginInput').value = '';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordGroup').classList.add('hidden');
+                document.getElementById('loginBtn').disabled = true;
+                document.getElementById('retryInfo').classList.add('hidden');
+                
+                // Reset attempt counter
+                this.currentAttempt = 0;
+                this.isRetrying = false;
+                
+                this.updateInputStatus('Type naturally...');
+                this.updateBiometricInfo();
+                this.updateAttemptDisplay();
+            }
+
+            updateAttemptDisplay() {
+                const attemptEl = document.getElementById('attemptCounter');
+                const retryInfoEl = document.getElementById('retryInfo');
+                
+                if (this.currentAttempt > 0) {
+                    attemptEl.textContent = `${this.currentAttempt}/${this.maxBiometricAttempts}`;
+                    retryInfoEl.classList.remove('hidden');
+                } else {
+                    retryInfoEl.classList.add('hidden');
+                }
+            }
+            
+            // Updated method: Update threshold display in login
+            updateThresholdDisplay() {
+                const threshold = Math.round(this.minSimilarityThreshold * 100);
+                document.getElementById('thresholdValue').textContent = threshold + '%';
+            }
+            
+            async processLogin() {
+                const inputValue = document.getElementById('loginInput').value;
+                const expectedPhrase = this.biometricSystem.phrase;
+                
+                if (inputValue !== expectedPhrase) {
+                    this.showStatus('Please type the complete phrase', 'error');
+                    return;
+                }
+                
+                if (!this.biometricSystem.isRecording) {
+                    this.showStatus('No keystroke data recorded', 'error');
+                    return;
+                }
+                
+                try {
+                    this.showLoading();
+                    this.currentAttempt++;
+                    this.updateAttemptDisplay();
+                    this.updateInputStatus('Analyzing biometric signature...', 'analyzing');
+                    
+                    // Verify the biometric signature
+                    const result = await this.biometricSystem.verify();
+                    
+                    this.updateBiometricInfo(result);
+                    
+                    if (result.isAuthentic && result.similarity >= this.minSimilarityThreshold) {
+                        // Successful biometric login
+                        this.loginSuccess('biometric', result.similarity);
+                    } else {
+                        // Biometric verification failed
+                        const similarityPercent = Math.round(result.similarity * 100);
+                        const thresholdPercent = Math.round(this.minSimilarityThreshold * 100);
+                        
+                        if (this.currentAttempt < this.maxBiometricAttempts) {
+                            // Still have attempts left - let user retry
+                            this.handleBiometricRetry(similarityPercent, thresholdPercent);
+                        } else {
+                            // No more attempts - show password field
+                            this.handleBiometricFailure(similarityPercent, thresholdPercent);
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Login verification failed:', error);
+                    
+                    if (this.currentAttempt < this.maxBiometricAttempts) {
+                        this.handleBiometricRetry(0, Math.round(this.minSimilarityThreshold * 100), error.message);
+                    } else {
+                        this.showStatus('Verification failed: ' + error.message, 'error');
+                        this.showPasswordField();
+                    }
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            updateBiometricInfo(result = null) {
+                if (result) {
+                    document.getElementById('similarityValue').textContent = 
+                        Math.round(result.similarity * 100) + '%';
+                    document.getElementById('authStatus').textContent = 
+                        result.isAuthentic ? 'Authenticated' : 'Failed';
+                } else {
+                    document.getElementById('similarityValue').textContent = '-';
+                    document.getElementById('authStatus').textContent = 'Ready';
+                }
+            }
+
+            handleBiometricRetry(similarity, threshold, errorMsg = null) {
+                this.isRetrying = true;
+                const attemptsLeft = this.maxBiometricAttempts - this.currentAttempt;
+                
+                // Clear the input for retry
+                document.getElementById('loginInput').value = '';
+                document.getElementById('loginBtn').disabled = true;
+                
+                // Show retry message
+                if (errorMsg) {
+                    this.updateInputStatus(`Error: ${errorMsg}. ${attemptsLeft} attempts left.`, 'failed');
+                    this.showStatus(`Authentication error. ${attemptsLeft} attempts remaining.`, 'warning');
+                } else {
+                    this.updateInputStatus(`Similarity: ${similarity}% (need ${threshold}%). ${attemptsLeft} attempts left.`, 'failed');
+                    this.showStatus(`Biometric match: ${similarity}% (required: ${threshold}%). ${attemptsLeft} attempts remaining.`, 'warning');
+                }
+                
+                // Auto-focus and provide guidance
+                setTimeout(() => {
+                    const loginInput = document.getElementById('loginInput');
+                    loginInput.focus();
+                    
+                    // Provide helpful tips based on attempt number
+                    if (this.currentAttempt === 1) {
+                        this.showStatus('Try typing more naturally and at your normal pace.', 'info');
+                    } else if (this.currentAttempt === 2) {
+                        this.showStatus('Last chance! Type exactly as you did during training.', 'warning');
+                    }
+                }, 2000);
+            }
+            
+            // New method: Handle final biometric failure
+            handleBiometricFailure(similarity, threshold) {
+                this.showPasswordField();
+                this.updateInputStatus('All biometric attempts failed. Password required.', 'failed');
+                this.showStatus(
+                    `Biometric authentication failed after ${this.maxBiometricAttempts} attempts. Final similarity: ${similarity}% (required: ${threshold}%). Please enter your password.`,
+                    'error'
+                );
+            }
+
+            clearCurrentAttempt() {
+                document.getElementById('loginInput').value = '';
+                document.getElementById('loginBtn').disabled = true;
+                
+                if (this.biometricSystem.isRecording) {
+                    this.biometricSystem.stopRecording();
+                }
+                
+                this.updateInputStatus('Type your phrase to authenticate...', '');
+            }
+            
+            showPasswordField() {
+                document.getElementById('passwordGroup').classList.remove('hidden');
+                document.getElementById('passwordInput').focus();
+                document.getElementById('loginBtn').textContent = 'Login with Password';
+                document.getElementById('loginBtn').disabled = false;
+            }
+            
+            async processPasswordLogin() {
+                const password = document.getElementById('passwordInput').value;
+                const username = document.getElementById('loginInput').value;
+                
+                if (!password) {
+                    this.showStatus('Please enter your password', 'error');
+                    return;
+                }
+                
+                if (!username) {
+                    this.showStatus('Please enter your username first', 'error');
+                    return;
+                }
+                
+                // Simulate password verification (in real app, this would be server-side)
+                if (password === 'demo123') { // Demo password
+                    this.loginSuccess('password', null);
+                } else {
+                    this.showStatus('Incorrect password', 'error');
+                    
+                    // Optional: Reset everything after wrong password
+                    setTimeout(() => {
+                        this.resetLoginState();
+                        this.showStatus('Please try again', 'info');
+                    }, 2000);
+                }
+            }
+            
+            loginSuccess(method, similarity = null) {
+                this.currentUser = {
+                    username: this.biometricSystem.phrase,
+                    loginMethod: method,
+                    similarity: similarity,
+                    loginTime: new Date().toLocaleString()
+                };
+                
+                // Update dashboard
+                document.getElementById('authMethod').textContent = 
+                    method === 'biometric' ? '🔐 Dynamics' : '🔑 Password';
+                document.getElementById('finalSimilarity').textContent = 
+                    similarity ? Math.round(similarity * 100) + '%' : 'N/A';
+                document.getElementById('loginTime').textContent = this.currentUser.loginTime;
+                
+                this.showStatus('Login successful!', 'success');
+                this.showDashboardSection();
+            }
+            
+            updateInputStatus(message, type = '') {
+                const statusEl = document.getElementById('inputStatus');
+                const textEl = statusEl.querySelector('.status-text');
+                
+                textEl.textContent = message;
+                statusEl.className = 'input-status ' + type;
+            }
+            
+            updateDynamicsInfo(result = null) {
+                if (result) {
+                    document.getElementById('similarityValue').textContent = 
+                        Math.round(result.similarity * 100) + '%';
+                    document.getElementById('authStatus').textContent = 
+                        result.isAuthentic ? 'Authenticated' : 'Failed';
+                } else {
+                    document.getElementById('similarityValue').textContent = '-';
+                    document.getElementById('authStatus').textContent = 'Ready';
+                }
+            }
+            
+            // System Management
+            logout() {
+                this.currentUser = null;
+                this.showLoginSection();
+                this.showStatus('Logged out successfully', 'success');
+            }
+            
+            async resetSystem() {
+                if (!confirm('This will delete all training data and reset the system. Continue?')) {
+                    return;
+                }
+                
+                try {
+                    this.showLoading();
+                    await this.biometricSystem.reset();
+                    
+                    this.currentUser = null;
+                    this.sampleCount = 0;
+                    this.resetTrainingState();
+                    this.resetLoginState();
+                    
+                    this.showWelcomeSection();
+                    this.showStatus('System reset successfull', 'success');
+                } catch (error) {
+                    console.error('Reset failed:', error);
+                    this.showStatus('Reset failed: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+
+            setupEventListeners() {
+                // Navigation
+                document.getElementById('setupBtn').addEventListener('click', () => this.showSetupSection());
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetSystem());
+                
+                // Setup - Step 1
+                document.getElementById('createMasterBtn').addEventListener('click', () => this.createMasterKey());
+                
+                // Setup - Step 2 (Threshold Selection)
+                document.getElementById('proceedToTrainingBtn').addEventListener('click', () => this.proceedToTraining());
+                
+                // Security level radio buttons
+                document.querySelectorAll('input[name="securityLevel"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => this.handleSecurityLevelChange(e));
+                });
+                
+                // Custom threshold slider
+                document.getElementById('customThreshold').addEventListener('input', (e) => this.handleCustomThreshold(e));
+                
+                // Setup - Step 3 (Training)
+                document.getElementById('finishSetupBtn').addEventListener('click', () => this.finishSetup());
+                document.getElementById('adjustThresholdBtn').addEventListener('click', () => this.adjustThreshold());
+                
+                // Training
+                document.getElementById('trainingInput').addEventListener('input', (e) => this.handleTrainingInput(e));
+                document.getElementById('trainingInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.processTrainingSample();
+                    }
+                });
+                
+                // Login
+                document.getElementById('loginInput').addEventListener('input', (e) => this.handleLoginInput(e));
+                document.getElementById('loginInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.processLogin();
+                    }
+                });
+                
+
+                document.getElementById('forcePasswordBtn').addEventListener('click', () => this.showPasswordField());
+                document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.processPasswordLogin();
+                    }
+                });
+
+                document.getElementById('loginBtn').addEventListener('click', () => {
+                    const passwordField = document.getElementById('passwordInput');
+                    if (!passwordField.classList.contains('hidden') && passwordField.offsetParent !== null) {
+                        // Password field is visible, process password login
+                        this.processPasswordLogin();
+                    } else {
+                        // Password field is hidden, process biometric login
+                        this.processLogin();
+                    }
+                });
+                
+                // Add clear attempt button handler
+                document.getElementById('clearAttemptBtn')?.addEventListener('click', () => {
+                    this.clearCurrentAttempt();
+                });
+                
+                // Add retry with different settings handler
+                document.getElementById('retrySettingsBtn')?.addEventListener('click', () => {
+                    this.showRetryOptions();
+                });
+                
+                // Dashboard
+                document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+                document.getElementById('retractBtn').addEventListener('click', () => this.showSetupSection());
+            }
+            
+            // New method: Handle security level changes
+            handleSecurityLevelChange(event) {
+                const threshold = parseInt(event.target.value);
+                this.selectedThreshold = threshold;
+                this.minSimilarityThreshold = threshold / 100;
+                
+                // Update custom slider to match
+                document.getElementById('customThreshold').value = threshold;
+                document.getElementById('customThresholdValue').textContent = threshold;
+                
+                this.updateThresholdDescription(threshold);
+            }
+            
+            // New method: Handle custom threshold slider
+            handleCustomThreshold(event) {
+                const threshold = parseInt(event.target.value);
+                this.selectedThreshold = threshold;
+                this.minSimilarityThreshold = threshold / 100;
+                
+                // Update display
+                document.getElementById('customThresholdValue').textContent = threshold;
+                
+                // Uncheck radio buttons when using custom
+                document.querySelectorAll('input[name="securityLevel"]').forEach(radio => {
+                    radio.checked = false;
+                });
+                
+                this.updateThresholdDescription(threshold);
+            }
+
+            showRetryOptions() {
+                const currentThreshold = Math.round(this.minSimilarityThreshold * 100);
+                const suggestedThreshold = Math.max(50, currentThreshold - 10);
+                
+                if (confirm(`Current security level: ${currentThreshold}%. Would you like to temporarily lower it to ${suggestedThreshold}% and try again?`)) {
+                    this.minSimilarityThreshold = suggestedThreshold / 100;
+                    this.biometricSystem.setThreshold(this.minSimilarityThreshold);
+                    this.currentAttempt = 0; // Reset attempts
+                    this.resetLoginState();
+                    this.updateThresholdDisplay();
+                    this.showStatus(`Security level temporarily lowered to ${suggestedThreshold}%. Try logging in again.`, 'info');
+                }
+            }
+            
+            // New method: Update threshold description
+            updateThresholdDescription(threshold) {
+                const descriptions = {
+                    50: "Very relaxed - High chance of false positives",
+                    55: "Relaxed - Easy login, lower security",
+                    60: "Low security - Suitable for low-risk applications",
+                    65: "Below average - Some security compromise",
+                    70: "Balanced - Recommended for most users",
+                    75: "Above average - Good security balance",
+                    80: "Secure - High security, may require more training",
+                    85: "Very secure - Strict matching required",
+                    90: "Maximum - Highest security, very strict",
+                    95: "Ultra strict - May be difficult to authenticate"
+                };
+                
+                // Find closest description
+                let closestThreshold = 70;
+                let minDiff = Math.abs(threshold - 70);
+                
+                Object.keys(descriptions).forEach(key => {
+                    const diff = Math.abs(threshold - parseInt(key));
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestThreshold = parseInt(key);
+                    }
+                });
+                
+                document.getElementById('thresholdDescription').textContent = descriptions[closestThreshold];
+            }
+
+            // New method: Show threshold selection step
+            showThresholdStep() {
+                document.getElementById('thresholdStep').classList.add('active');
+                document.getElementById('trainingStep').classList.remove('active');
+                
+                // Initialize with default values
+                this.updateThresholdDescription(this.selectedThreshold);
+            }
+            
+            // New method: Proceed to training
+            proceedToTraining() {
+                const trainingPhrase = document.getElementById('trainingPhrase').value;
+                
+                // Set the threshold in the biometric system
+                this.biometricSystem.setThreshold(this.minSimilarityThreshold);
+                
+                // Update UI for training
+                document.getElementById('phraseDisplay').textContent = trainingPhrase;
+                document.getElementById('currentPhrase').textContent = trainingPhrase;
+                document.getElementById('currentSecurityLevel').textContent = this.selectedThreshold + '%';
+                document.getElementById('trainingInput').value = '';
+                document.getElementById('trainingInput').disabled = false;
+                
+                // Show training step
+                document.getElementById('thresholdStep').classList.remove('active');
+                document.getElementById('trainingStep').classList.add('active');
+                
+                // Focus on training input
+                setTimeout(() => {
+                    document.getElementById('trainingInput').focus();
+                }, 100);
+                
+                this.showStatus(`Security level set to ${this.selectedThreshold}%. Start training!`, 'success');
+            }
+            
+            // New method: Adjust threshold during training
+            adjustThreshold() {
+                document.getElementById('trainingStep').classList.remove('active');
+                document.getElementById('thresholdStep').classList.add('active');
+                this.showStatus('Adjust your security level and click "Proceed to Training"', 'info');
+            }
+
+        }
+
+        // Initialize the application when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                window.biometricApp = new DynamicsLoginApp();
+            } catch (error) {
+                console.error('Failed to initialize application:', error);
+                document.body.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; text-align: center; padding: 2rem;">
+                        <h1 style="color: #ef4444; margin-bottom: 1rem;">⚠️ Application Error</h1>
+                        <p style="color: #6b7280; margin-bottom: 2rem;">Failed to initialize the biometric authentication system.</p>
+                        <p style="color: #374151; font-family: monospace; background: #f3f4f6; padding: 1rem; border-radius: 8px;">${error.message}</p>
+                        <button onclick="location.reload()" style="margin-top: 2rem; padding: 0.75rem 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Reload Page</button>
+                    </div>
+                `;
+            }
+        });
+
+        // Export for debugging
+        window.DynamicsLoginApp = DynamicsLoginApp;
+    </script>
+</body>
+</html>

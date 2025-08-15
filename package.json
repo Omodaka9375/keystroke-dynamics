@@ -1,0 +1,52 @@
+{
+    "name": "keystroke-dynamics",
+    "version": "1.0.0",
+    "description": "Passwordless authentication for the browser",
+    "main": "keystroke-dynamics.min.js",
+    "browser": "keystroke-dynamics.min.js",
+    "files": [
+      "keystroke-dynamics.js",
+      "keystroke-dynamics.min.js",
+      "README.md",
+      "LICENSE",
+      "package.json"
+    ],
+    "scripts": {
+      "test": "echo \"Tests will be added in future versions\" && exit 0"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/Omodaka9375/keystroke-dynamics.git"
+    },
+    "keywords": [
+     "keystroke-dynamics",
+     "biometric-authentication",
+     "passwordless-login",
+     "typing-patterns",
+     "behavioral-biometrics",
+     "keystroke-biometrics",
+     "authentication-system",
+     "passwordless-authentication",
+     "javascript",
+     "web-crypto-api",
+     "indexeddb",
+     "client-side-encryption",
+     "aes-256",
+     "browser-security",
+     "webauth"
+    ],
+    "author": {
+      "name": "Branislav Djalic",
+      "email": "branislav.djalic@gmail.com"
+    },
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/Omodaka9375/keystroke-dynamics/issues"
+    },
+    "homepage": "https://github.com/Omodaka9375/keystroke-dynamics",
+    "engines": {
+      "node": ">=14.0.0"
+    },
+    "jsdelivr": "keystroke-dynamics.min.js",
+    "unpkg": "keystroke-dynamics.min.js"
+  }
