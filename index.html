@@ -441,6 +441,7 @@
             .custom-threshold, .biometric-info, .current-settings {
                 background: var(--surface-900); border-color: var(--surface-800);
             }
+            .feature .feat-label { color: var(--surface-200); }
             .nav { background: rgb(23 23 23 / .8); border-color: var(--surface-800); }
             .nav-brand { color: var(--surface-100); }
 
@@ -794,18 +795,27 @@
                 this.updateTrainingProgress();
             }
 
+            handleLoginFocus() {
+                const input = document.getElementById('loginInput');
+                const expectedPhrase = this.biometricSystem.phrase;
+                if (!expectedPhrase) return;
+                // Only start recording if the input is empty (fresh start)
+                if (!this.biometricSystem.isRecording && input.value.length === 0) {
+                    console.log('Starting login recording (on focus)...');
+                    this.biometricSystem.startRecording(input);
+                    if (this.isRetrying) { this.updateInputStatus(`Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts} - Recording...`, 'analyzing'); }
+                    else { this.updateInputStatus('Recording keystroke pattern...', 'analyzing'); }
+                }
+            }
+
             handleLoginInput(event) {
                 const input = event.target;
                 const expectedPhrase = this.biometricSystem.phrase;
                 if (!expectedPhrase) { this.showStatus('System not properly initialized', 'error'); return; }
                 console.log(`Login input: "${input.value}" (expected: "${expectedPhrase}")`);
-                const wasEmpty = input.value.length === 0;
-                if (wasEmpty && this.biometricSystem.isRecording) { this.biometricSystem.stopRecording(); }
-                if (!this.biometricSystem.isRecording && input.value.length === 1) {
-                    console.log('Starting login recording...');
-                    this.biometricSystem.startRecording(input);
-                    if (this.isRetrying) { this.updateInputStatus(`Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts} - Recording...`, 'analyzing'); }
-                    else { this.updateInputStatus('Recording keystroke pattern...', 'analyzing'); }
+                // If user clears input completely, restart recording on next focus
+                if (input.value.length === 0 && this.biometricSystem.isRecording) {
+                    this.biometricSystem.stopRecording();
                 }
                 if (input.value === expectedPhrase) {
                     document.getElementById('loginBtn').disabled = false;
@@ -822,13 +832,49 @@
                 }
             }
 
+            handleTrainingInputFocus() {
+                const input = document.getElementById('trainingInput');
+                if (input.disabled) return;
+                // Only start recording if the input is empty (fresh sample)
+                if (!this.isTraining && input.value.length === 0) {
+                    console.log('Starting training recording (on focus)...');
+                    this.biometricSystem.startRecording(input);
+                    this.isTraining = true;
+                }
+            }
+
             handleTrainingInput(event) {
                 const input = event.target;
+                if (input.disabled) return;
                 const expectedPhrase = document.getElementById('phraseDisplay').textContent;
                 console.log(`Training input: "${input.value}" (expected: "${expectedPhrase}")`);
-                if (!this.isTraining && input.value.length === 1) { console.log('Starting training recording...'); this.biometricSystem.startRecording(input); this.isTraining = true; }
-                if (input.value === expectedPhrase && this.isTraining) { console.log('Training phrase complete, processing sample...'); setTimeout(() => this.processTrainingSample(), 200); }
-                else if (input.value.length === 0 && this.isTraining) { console.log('Input cleared, stopping recording'); this.biometricSystem.stopRecording(); this.isTraining = false; }
+
+                // Start recording on first keystroke
+                if (!this.isTraining && input.value.length === 1) {
+                    console.log('Starting training recording...');
+                    this.biometricSystem.startRecording(input);
+                    this.isTraining = true;
+                }
+
+                // Exact match = process
+                if (this.isTraining && input.value === expectedPhrase) {
+                    console.log('Training phrase complete, processing sample...');
+                    setTimeout(() => this.processTrainingSample(), 200);
+                }
+                // Typo detected — reset
+                else if (this.isTraining && input.value.length > 0 && !expectedPhrase.startsWith(input.value)) {
+                    this.isTraining = false;
+                    this.biometricSystem.stopRecording();
+                    this.showStatus('Typo detected — please retype the phrase correctly.', 'warning');
+                    input.value = '';
+                    setTimeout(() => input.focus(), 100);
+                }
+                // Cleared input
+                else if (this.isTraining && input.value.length === 0) {
+                    console.log('Input cleared, stopping recording');
+                    this.biometricSystem.stopRecording();
+                    this.isTraining = false;
+                }
             }
 
             async processTrainingSample() {
@@ -839,8 +885,11 @@
                     document.getElementById('trainingInput').value = '';
                     this.updateTrainingProgress();
                     this.showStatus(`Sample ${this.sampleCount} recorded successfully!`, 'success');
-                    if (this.sampleCount >= this.requiredSamples) { document.getElementById('finishSetupBtn').disabled = false; this.showStatus('Training complete! You can now finish setup.', 'success'); }
-                    else { setTimeout(() => { document.getElementById('trainingInput').focus(); }, 500); }
+                    if (this.sampleCount >= this.requiredSamples) {
+                        document.getElementById('finishSetupBtn').disabled = false;
+                        document.getElementById('trainingInput').disabled = true;
+                        this.showStatus('Training complete! You can now finish setup.', 'success');
+                    } else { setTimeout(() => { document.getElementById('trainingInput').focus(); }, 500); }
                 } catch (error) {
                     this.isTraining = false; console.error('Training sample failed:', error);
                     this.showStatus('Failed to record sample: ' + error.message, 'error');
@@ -998,8 +1047,10 @@
                 document.getElementById('customThreshold').addEventListener('input', (e) => this.handleCustomThreshold(e));
                 document.getElementById('finishSetupBtn').addEventListener('click', () => this.finishSetup());
                 document.getElementById('adjustThresholdBtn').addEventListener('click', () => this.adjustThreshold());
+                document.getElementById('trainingInput').addEventListener('focus', () => this.handleTrainingInputFocus());
                 document.getElementById('trainingInput').addEventListener('input', (e) => this.handleTrainingInput(e));
                 document.getElementById('trainingInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { this.processTrainingSample(); } });
+                document.getElementById('loginInput').addEventListener('focus', () => this.handleLoginFocus());
                 document.getElementById('loginInput').addEventListener('input', (e) => this.handleLoginInput(e));
                 document.getElementById('loginInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { this.processLogin(); } });
                 document.getElementById('forcePasswordBtn').addEventListener('click', () => this.showPasswordField());

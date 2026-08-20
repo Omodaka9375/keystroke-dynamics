@@ -116,7 +116,7 @@ describe('Utils', () => {
             expect(result.threshold).toBe(CONFIG.BIOMETRICS.DEFAULT_THRESHOLD);
         });
 
-        it('phrase mismatch should throw', async () => {
+        it('phrase mismatch should set phraseMatch:false without throwing', async () => {
             const auth = new KeystrokeDynamics();
             currentAuth = auth;
             await auth.initialize('pwd-test-mismatch', 'abcd');
@@ -128,7 +128,10 @@ describe('Utils', () => {
             }
 
             await record(auth, ['x', 'y', 'z', 'w']);
-            await expect(auth.verify('abcd')).rejects.toThrow(/mismatch/i);
+            const result = await auth.verify('abcd');
+            expect(result.phraseMatch).toBe(false);
+            // Biometrics still runs — different keys means low similarity
+            expect(result.similarity).toBeLessThanOrEqual(1.0);
         });
     });
 

@@ -736,7 +736,9 @@ class KeystrokeDynamics {
                 throw new DynamicsError('No keystroke data recorded', 'NO_DATA');
             }
 
-            // Optionally validate that the typed phrase matches expectations
+            // Optionally validate that the typed phrase matches expectations.
+            // Non-fatal: biometrics still run even on mismatch (caller decides).
+            let phraseMatch = true;
             if (expectedPhrase !== null) {
                 const reverse = {
                     'period': '.', 'at': '@', 'minus': '-',
@@ -747,11 +749,9 @@ class KeystrokeDynamics {
                     .map(e => reverse[e.key] || e.key);
                 const typedString = downKeys.join('');
                 const expectedLower = expectedPhrase.toLowerCase();
-                if (typedString !== expectedLower) {
-                    throw new DynamicsError(
-                        `Phrase mismatch: expected "${expectedPhrase}"`,
-                        'PHRASE_MISMATCH'
-                    );
+                phraseMatch = typedString === expectedLower;
+                if (!phraseMatch && isDebug()) {
+                    console.warn('Phrase mismatch (non-fatal):', { typedString, expectedLower });
                 }
             }
 
@@ -792,7 +792,8 @@ class KeystrokeDynamics {
                 isAuthentic: medianSimilarity >= this.#threshold,
                 similarity: medianSimilarity,
                 threshold: this.#threshold,
-                sampleCount: signatures.length
+                sampleCount: signatures.length,
+                phraseMatch
             };
         } catch (error) {
             console.error('Verification error:', error);
