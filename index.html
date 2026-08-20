@@ -384,12 +384,13 @@
         .login-options { text-align: center; margin-top: var(--s-5); padding-top: var(--s-5); border-top: 1px solid var(--surface-200); }
 
         /* ── Toasts ── */
-        .status-messages { position: fixed; top: var(--s-12); right: var(--s-5); z-index: 2000; max-width: 400px; display: flex; flex-direction: column; gap: var(--s-2); }
+        .status-messages { position: fixed; top: var(--s-12); right: var(--s-5); z-index: 2000; max-width: 320px; display: flex; flex-direction: column; gap: var(--s-2); pointer-events: none; }
         .status-message {
-            background: var(--surface-0); border-radius: var(--r-lg); padding: var(--s-4) var(--s-5);
+            background: var(--surface-0); border-radius: var(--r-md); padding: var(--s-3) var(--s-4);
             box-shadow: var(--shadow-overlay); border: 1px solid var(--surface-200);
-            animation: slideIn .35s var(--ease-out); font-size: .9rem; font-weight: 500;
+            animation: slideIn .35s var(--ease-out); font-size: .835rem; font-weight: 500;
             display: flex; align-items: center; gap: var(--s-3);
+            pointer-events: auto;
         }
         .status-message::before { content: ''; width: 4px; height: 100%; border-radius: 2px; background: var(--brand-500); position: absolute; left: 0; top: 0; }
         .status-message.error { border-left: 4px solid var(--red-500); }
@@ -436,18 +437,54 @@
                 background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgb(139 92 246 / .12), transparent);
                 color: var(--surface-100);
             }
-            .card, .feature, .training-area, .info-card, .status-message, .security-label, .form-group input {
+            .card, .feature, .training-area, .info-card, .status-message, .security-label, .form-group input,
+            .custom-threshold, .biometric-info, .current-settings {
                 background: var(--surface-900); border-color: var(--surface-800);
             }
             .nav { background: rgb(23 23 23 / .8); border-color: var(--surface-800); }
             .nav-brand { color: var(--surface-100); }
+
+            /* ── nav buttons ── */
             .nav-btn { background: var(--surface-800); border-color: var(--surface-700); color: var(--surface-300); }
+            .nav-btn:hover { background: var(--surface-700); color: var(--surface-100); }
+            .nav-btn.danger { color: var(--red-400); }
+            .nav-btn.danger:hover { background: rgb(239 68 68 / .15); }
+
             .form-group input { color: var(--surface-100); }
+            .form-group input::placeholder { color: var(--surface-500); }
             .detail { background: var(--surface-800); }
-            .training-area, .info-card, .biometric-info, .current-settings, .custom-threshold { background: var(--surface-800); }
-            .phrase-display { background: var(--surface-800); color: var(--surface-300); }
+
+            /* ── button hover readability ── */
             .btn.secondary { background: var(--surface-800); color: var(--surface-300); border-color: var(--surface-700); }
-            .btn.secondary:hover { background: var(--surface-700); }
+            .btn.secondary:hover:not(:disabled) { background: var(--surface-600); color: var(--surface-100); }
+            .btn.primary { background: var(--brand-500); }
+            .btn.primary:hover:not(:disabled) { background: var(--brand-400); }
+
+            .phrase-display { background: var(--surface-800); color: var(--surface-300); }
+
+            /* ── label readability ── */
+            .stat-label { color: var(--surface-400); }
+            .security-name { color: var(--surface-300); }
+            .security-percent, .security-option input[type="radio"]:checked + .security-label .security-percent { color: var(--surface-100); }
+            .detail .label { color: var(--surface-400); }
+            .detail .value { color: var(--surface-100); }
+            .info-item .label { color: var(--surface-400); }
+            .info-item .value { color: var(--surface-100); }
+            .setting-info .label { color: var(--brand-400); }
+            .form-group label { color: var(--surface-300); }
+            .card h2, .step-content h3, .info-card h3 { color: var(--surface-100); }
+            .card > p, .step-content > p, .hero p { color: var(--surface-400); }
+            .retry-info { background: rgb(251 191 36 / .08); border-color: rgb(251 191 36 / .2); }
+            .retry-header { color: var(--amber-400); }
+            .input-status { background: rgb(139 92 246 / .08); border-color: rgb(139 92 246 / .15); }
+            .input-status .status-text { color: var(--brand-400); }
+            .input-status.analyzing { background: rgb(251 191 36 / .08); border-color: rgb(251 191 36 / .2); }
+            .input-status.analyzing .status-text { color: var(--amber-400); }
+            .input-status.success { background: rgb(34 197 94 / .08); border-color: rgb(34 197 94 / .2); }
+            .input-status.success .status-text { color: var(--green-400); }
+            .input-status.failed { background: rgb(239 68 68 / .08); border-color: rgb(239 68 68 / .2); }
+            .input-status.failed .status-text { color: var(--red-400); }
+            .form-group small { color: var(--surface-400); }
         }
     </style>
 </head>
