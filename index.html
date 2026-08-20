@@ -704,6 +704,7 @@
                 this.maxBiometricAttempts = 3;
                 this.currentAttempt = 0;
                 this.isRetrying = false;
+                this.processingSample = false;
                 this.init();
             }
 
@@ -769,7 +770,7 @@
             }
 
             resetTrainingState() {
-                this.sampleCount = 0; this.isTraining = false;
+                this.sampleCount = 0; this.isTraining = false; this.processingSample = false;
                 document.getElementById('trainingInput').value = '';
                 document.getElementById('trainingInput').disabled = true;
                 document.getElementById('finishSetupBtn').disabled = true;
@@ -794,10 +795,19 @@
                 const expectedPhrase = this.biometricSystem.phrase;
                 if (!expectedPhrase) { this.showStatus('System not properly initialized', 'error'); return; }
                 console.log(`Login input: "${input.value}" (expected: "${expectedPhrase}")`);
-                // If user clears input completely, restart recording on next focus
+
+                // Start recording on first keystroke if not already recording
+                if (!this.biometricSystem.isRecording && input.value.length === 1) {
+                    console.log('Starting login recording...');
+                    this.biometricSystem.startRecording(input);
+                    if (this.isRetrying) { this.updateInputStatus(`Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts} - Recording...`, 'analyzing'); }
+                    else { this.updateInputStatus('Recording keystroke pattern...', 'analyzing'); }
+                }
+                // If user clears input completely, stop recording so next attempt starts fresh
                 if (input.value.length === 0 && this.biometricSystem.isRecording) {
                     this.biometricSystem.stopRecording();
                 }
+                // Check phrase match
                 if (input.value === expectedPhrase) {
                     document.getElementById('loginBtn').disabled = false;
                     if (this.isRetrying) { this.updateInputStatus(`Ready to verify (Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts})`, 'success'); }
@@ -814,14 +824,7 @@
             }
 
             handleTrainingInputFocus() {
-                const input = document.getElementById('trainingInput');
-                if (input.disabled) return;
-                // Only start recording if the input is empty (fresh sample)
-                if (!this.isTraining && input.value.length === 0) {
-                    console.log('Starting training recording (on focus)...');
-                    this.biometricSystem.startRecording(input);
-                    this.isTraining = true;
-                }
+                // No-op: recording starts on first keystroke via handleTrainingInput
             }
 
             handleTrainingInput(event) {
@@ -830,6 +833,9 @@
                 const expectedPhrase = document.getElementById('phraseDisplay').textContent;
                 console.log(`Training input: "${input.value}" (expected: "${expectedPhrase}")`);
 
+                // Ignore input while a sample is being processed
+                if (this.processingSample) return;
+
                 // Start recording on first keystroke
                 if (!this.isTraining && input.value.length === 1) {
                     console.log('Starting training recording...');
@@ -837,10 +843,12 @@
                     this.isTraining = true;
                 }
 
-                // Exact match = process
+                // Exact match — lock and process immediately (no delay that invites extra keystrokes)
                 if (this.isTraining && input.value === expectedPhrase) {
                     console.log('Training phrase complete, processing sample...');
-                    setTimeout(() => this.processTrainingSample(), 200);
+                    this.processingSample = true;
+                    this.isTraining = false;
+                    setTimeout(() => this.processTrainingSample(), 150);
                 }
                 // Typo detected — reset
                 else if (this.isTraining && input.value.length > 0 && !expectedPhrase.startsWith(input.value)) {
@@ -859,9 +867,8 @@
             }
 
             async processTrainingSample() {
-                if (!this.isTraining) return;
                 try {
-                    this.isTraining = false; console.log('Processing training sample...');
+                    console.log('Processing training sample...');
                     await this.biometricSystem.addSample(); this.sampleCount++;
                     document.getElementById('trainingInput').value = '';
                     this.updateTrainingProgress();
@@ -870,12 +877,17 @@
                         document.getElementById('finishSetupBtn').disabled = false;
                         document.getElementById('trainingInput').disabled = true;
                         this.showStatus('Training complete! You can now finish setup.', 'success');
-                    } else { setTimeout(() => { document.getElementById('trainingInput').focus(); }, 500); }
+                    } else {
+                        setTimeout(() => { document.getElementById('trainingInput').focus(); }, 500);
+                    }
                 } catch (error) {
-                    this.isTraining = false; console.error('Training sample failed:', error);
+                    console.error('Training sample failed:', error);
                     this.showStatus('Failed to record sample: ' + error.message, 'error');
                     document.getElementById('trainingInput').value = '';
                     setTimeout(() => { document.getElementById('trainingInput').focus(); }, 1000);
+                } finally {
+                    this.processingSample = false;
+                    this.isTraining = false;
                 }
             }
 
@@ -904,6 +916,7 @@
                 document.getElementById('loginBtn').disabled = true;
                 document.getElementById('retryInfo').classList.add('hidden');
                 this.currentAttempt = 0; this.isRetrying = false;
+                if (this.biometricSystem && this.biometricSystem.isRecording) this.biometricSystem.stopRecording();
                 this.updateInputStatus('Type naturally...');
                 this.updateBiometricInfo(); this.updateAttemptDisplay();
             }
@@ -947,6 +960,7 @@
             }
 
             handleBiometricRetry(similarity, threshold, errorMsg = null) {
+                if (this.biometricSystem.isRecording) this.biometricSystem.stopRecording();
                 this.isRetrying = true; const attemptsLeft = this.maxBiometricAttempts - this.currentAttempt;
                 document.getElementById('loginInput').value = ''; document.getElementById('loginBtn').disabled = true;
                 if (errorMsg) { this.updateInputStatus(`Error: ${errorMsg}. ${attemptsLeft} attempts left.`, 'failed'); this.showStatus(`Authentication error. ${attemptsLeft} attempts remaining.`, 'warning'); }
@@ -1030,7 +1044,7 @@
                 document.getElementById('adjustThresholdBtn').addEventListener('click', () => this.adjustThreshold());
                 document.getElementById('trainingInput').addEventListener('focus', () => this.handleTrainingInputFocus());
                 document.getElementById('trainingInput').addEventListener('input', (e) => this.handleTrainingInput(e));
-                document.getElementById('trainingInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { this.processTrainingSample(); } });
+                document.getElementById('trainingInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && this.isTraining && !this.processingSample) { this.processingSample = true; this.isTraining = false; setTimeout(() => this.processTrainingSample(), 150); } });
                 document.getElementById('loginInput').addEventListener('focus', () => this.handleLoginFocus());
                 document.getElementById('loginInput').addEventListener('input', (e) => this.handleLoginInput(e));
                 document.getElementById('loginInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { this.processLogin(); } });
