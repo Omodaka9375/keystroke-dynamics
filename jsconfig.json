@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "checkJs": true,
+        "noEmit": true,
+        "strict": false,
+        "lib": ["ES2022", "DOM"],
+        "allowJs": true,
+        "resolveJsonModule": false,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "types": []
+    },
+    "include": ["keystroke-dynamics.js", "types.d.ts"],
+    "exclude": ["node_modules", "tests", "keystroke-dynamics.min.js"]
+}

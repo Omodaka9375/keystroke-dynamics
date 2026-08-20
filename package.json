@@ -1,52 +1,65 @@
 {
     "name": "keystroke-dynamics",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "description": "Passwordless authentication for the browser",
     "main": "keystroke-dynamics.min.js",
     "browser": "keystroke-dynamics.min.js",
     "files": [
-      "keystroke-dynamics.js",
-      "keystroke-dynamics.min.js",
-      "README.md",
-      "LICENSE",
-      "package.json"
+        "keystroke-dynamics.js",
+        "keystroke-dynamics.min.js",
+        "README.md",
+        "LICENSE",
+        "package.json"
     ],
     "scripts": {
-      "test": "echo \"Tests will be added in future versions\" && exit 0"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "typecheck": "tsc --noEmit --project jsconfig.json",
+        "build": "terser keystroke-dynamics.js -o keystroke-dynamics.min.js -c -m --comments /keystroke/i",
+        "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+        "dev": "vitest --reporter=verbose"
     },
     "repository": {
-      "type": "git",
-      "url": "git+https://github.com/Omodaka9375/keystroke-dynamics.git"
+        "type": "git",
+        "url": "git+https://github.com/Omodaka9375/keystroke-dynamics.git"
     },
     "keywords": [
-     "keystroke-dynamics",
-     "biometric-authentication",
-     "passwordless-login",
-     "typing-patterns",
-     "behavioral-biometrics",
-     "keystroke-biometrics",
-     "authentication-system",
-     "passwordless-authentication",
-     "javascript",
-     "web-crypto-api",
-     "indexeddb",
-     "client-side-encryption",
-     "aes-256",
-     "browser-security",
-     "webauth"
+        "keystroke-dynamics",
+        "biometric-authentication",
+        "passwordless-login",
+        "typing-patterns",
+        "behavioral-biometrics",
+        "keystroke-biometrics",
+        "authentication-system",
+        "passwordless-authentication",
+        "javascript",
+        "web-crypto-api",
+        "indexeddb",
+        "client-side-encryption",
+        "aes-256",
+        "browser-security",
+        "webauth"
     ],
     "author": {
-      "name": "Branislav Djalic",
-      "email": "branislav.djalic@gmail.com"
+        "name": "Branislav Djalic",
+        "email": "branislav.djalic@gmail.com"
     },
     "license": "MIT",
     "bugs": {
-      "url": "https://github.com/Omodaka9375/keystroke-dynamics/issues"
+        "url": "https://github.com/Omodaka9375/keystroke-dynamics/issues"
     },
     "homepage": "https://github.com/Omodaka9375/keystroke-dynamics",
     "engines": {
-      "node": ">=14.0.0"
+        "node": ">=14.0.0"
     },
     "jsdelivr": "keystroke-dynamics.min.js",
-    "unpkg": "keystroke-dynamics.min.js"
-  }
+    "unpkg": "keystroke-dynamics.min.js",
+    "devDependencies": {
+        "@types/node": "^26.2.0",
+        "fake-indexeddb": "^6.2.5",
+        "jsdom": "^28.1.0",
+        "terser": "^5.50.0",
+        "typescript": "^7.0.2",
+        "vitest": "^4.1.11"
+    }
+}

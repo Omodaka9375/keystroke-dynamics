@@ -39,12 +39,17 @@
 
             /* Status Colors */
             --success-50: #ecfdf5;
+            --success-200: #a7f3d0;
+            --success-400: #34d399;
             --success-500: #3073c3;
             --success-600: #059669;
             --warning-50: #fffbeb;
+            --warning-200: #fde68a;
             --warning-500: #f59e0b;
             --warning-600: #d97706;
             --error-50: #fef2f2;
+            --error-200: #fecaca;
+            --error-300: #fca5a5;
             --error-500: #ef4444;
             --error-600: #dc2626;
 
@@ -589,7 +594,7 @@
 
         .security-label:hover {
             border-color: var(--primary-400);
-            background: var(--primary-25);
+            background: var(--primary-100);
             transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
@@ -1473,7 +1478,7 @@
                                 <div class="training-area">
                                     <div class="phrase-display" id="phraseDisplay">john.doe@example.com</div>
                                     <input type="text" id="trainingInput" placeholder="Type the phrase above" disabled>
-                                    <div class="input-status" id="inputStatus">
+                                    <div class="input-status" id="trainingInputStatus">
                                         <span class="status-text">Start typing to begin recording...</span>
                                     </div>
                                     <div class="training-progress">
@@ -1678,11 +1683,13 @@
             
 
             checkSetupStatus() {
-                if (this.biometricSystem.isReady()) {
-                    this.showLoginSection();
-                } else {
-                    this.showWelcomeSection();
-                }
+                Promise.resolve(this.biometricSystem.isReady()).then(ready => {
+                    if (ready) {
+                        this.showLoginSection();
+                    } else {
+                        this.showWelcomeSection();
+                    }
+                });
             }
             
             // UI Management
@@ -1793,19 +1800,23 @@
             handleLoginInput(event) {
                 const input = event.target;
                 const expectedPhrase = this.biometricSystem.phrase;
-                
+
                 if (!expectedPhrase) {
                     this.showStatus('System not properly initialized', 'error');
                     return;
                 }
-                
+
                 console.log(`Login input: "${input.value}" (expected: "${expectedPhrase}")`);
-                
-                // Start recording on first character (only if not retrying or if input was cleared)
+
+                // Start recording on first character OR restart if input was cleared after a previous attempt
+                const wasEmpty = input.value.length === 0;
+                if (wasEmpty && this.biometricSystem.isRecording) {
+                    this.biometricSystem.stopRecording();
+                }
                 if (!this.biometricSystem.isRecording && input.value.length === 1) {
                     console.log('Starting login recording...');
                     this.biometricSystem.startRecording(input);
-                    
+
                     if (this.isRetrying) {
                         this.updateInputStatus(`Attempt ${this.currentAttempt + 1}/${this.maxBiometricAttempts} - Recording...`, 'analyzing');
                     } else {
@@ -1912,12 +1923,17 @@
                 document.getElementById('progressText').textContent = `${this.sampleCount}/${this.requiredSamples} samples collected`;
                 document.getElementById('sampleCount').textContent = this.sampleCount;
                 
-                // Calculate and show consistency
+                // Calculate and show consistency from real data when available
+                const accuracyVal = document.getElementById('accuracyValue');
+                const consistencyVal = document.getElementById('consistencyValue');
                 if (this.sampleCount > 1) {
-                    const accuracy = Math.min(85 + (this.sampleCount * 2), 98);
-                    const consistency = Math.min(75 + (this.sampleCount * 3), 95);
-                    document.getElementById('accuracyValue').textContent = accuracy + '%';
-                    document.getElementById('consistencyValue').textContent = consistency + '%';
+                    // Real metrics are only available after cross-validation during verify();
+                    // show placeholder until then.
+                    accuracyVal.textContent = '-';
+                    consistencyVal.textContent = '-';
+                } else {
+                    accuracyVal.textContent = '-';
+                    consistencyVal.textContent = '-';
                 }
                 
                 // Show threshold recommendation if accuracy is low
@@ -1993,7 +2009,7 @@
                     this.updateInputStatus('Analyzing biometric signature...', 'analyzing');
                     
                     // Verify the biometric signature
-                    const result = await this.biometricSystem.verify();
+                    const result = await this.biometricSystem.verify(expectedPhrase);
                     
                     this.updateBiometricInfo(result);
                     
@@ -2154,18 +2170,7 @@
                 statusEl.className = 'input-status ' + type;
             }
             
-            updateDynamicsInfo(result = null) {
-                if (result) {
-                    document.getElementById('similarityValue').textContent = 
-                        Math.round(result.similarity * 100) + '%';
-                    document.getElementById('authStatus').textContent = 
-                        result.isAuthentic ? 'Authenticated' : 'Failed';
-                } else {
-                    document.getElementById('similarityValue').textContent = '-';
-                    document.getElementById('authStatus').textContent = 'Ready';
-                }
-            }
-            
+
             // System Management
             logout() {
                 this.currentUser = null;
@@ -2188,7 +2193,7 @@
                     this.resetLoginState();
                     
                     this.showWelcomeSection();
-                    this.showStatus('System reset successfull', 'success');
+                    this.showStatus('System reset successful', 'success');
                 } catch (error) {
                     console.error('Reset failed:', error);
                     this.showStatus('Reset failed: ' + error.message, 'error');
@@ -2246,8 +2251,8 @@
                 });
 
                 document.getElementById('loginBtn').addEventListener('click', () => {
-                    const passwordField = document.getElementById('passwordInput');
-                    if (!passwordField.classList.contains('hidden') && passwordField.offsetParent !== null) {
+                    const passwordGroup = document.getElementById('passwordGroup');
+                    if (!passwordGroup.classList.contains('hidden')) {
                         // Password field is visible, process password login
                         this.processPasswordLogin();
                     } else {
@@ -2256,16 +2261,7 @@
                     }
                 });
                 
-                // Add clear attempt button handler
-                document.getElementById('clearAttemptBtn')?.addEventListener('click', () => {
-                    this.clearCurrentAttempt();
-                });
-                
-                // Add retry with different settings handler
-                document.getElementById('retrySettingsBtn')?.addEventListener('click', () => {
-                    this.showRetryOptions();
-                });
-                
+
                 // Dashboard
                 document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
                 document.getElementById('retractBtn').addEventListener('click', () => this.showSetupSection());

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+keystroke-dynamics.min.js
+
+# Test artifacts
+.vitest/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript (if ever added)
+*.tsbuildinfo
+
+# Terser cache
+.cache/

@@ -1,7 +1,23 @@
 /**
  * Keystroke Dynamics Authentication System
- * Passwordless Web Authentication - FIXED SIMILARITY CALCULATION
+ * Passwordless Web Authentication
  */
+
+// SSR-safe localStorage wrapper
+const safeStorage = {
+    get(key) {
+        try { return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null; }
+        catch { return null; }
+    },
+    set(key, val) {
+        try { if (typeof localStorage !== 'undefined') localStorage.setItem(key, val); }
+        catch { /* noop */ }
+    },
+    remove(key) {
+        try { if (typeof localStorage !== 'undefined') localStorage.removeItem(key); }
+        catch { /* noop */ }
+    }
+};
 
 // Configuration Constants
 const CONFIG = Object.freeze({
@@ -53,6 +69,10 @@ const ALLOWED_CHARS = Object.freeze([
     'at', 'period', 'minus', 'underscore', 'space'
 ]);
 
+// Debug logging gate - off by default; enable with: window.enableDebug = true
+// Re-evaluated on every access so it can be toggled at runtime
+const isDebug = () => (typeof window !== 'undefined' && window.enableDebug === true);
+
 // Custom Error Classes
 class DynamicsError extends Error {
     constructor(message, code) {
@@ -78,21 +98,27 @@ class DatabaseError extends Error {
     }
 }
 
-// Utility Functions - CLEANED UP
+// Utility Functions
 const Utils = {
     getHighResTime() {
         return performance.now ? performance.now() : Date.now();
     },
 
     buffToBase64(buffer) {
-        return btoa(String.fromCharCode.apply(null, buffer));
+        // Chunked to avoid call-stack overflow on large buffers
+        const chunkSize = 0x8000;
+        const chunks = [];
+        for (let i = 0; i < buffer.length; i += chunkSize) {
+            chunks.push(String.fromCharCode.apply(null, buffer.subarray(i, i + chunkSize)));
+        }
+        return btoa(chunks.join(''));
     },
 
     base64ToBuff(base64) {
         return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
     },
 
-    // SIMPLIFIED: Only handle the keys we actually need
+    // Only handle the keys we actually need
     normalizeKey(key) {
         if (!key || typeof key !== 'string') return '';
         
@@ -112,7 +138,7 @@ const Utils = {
         return ALLOWED_CHARS.includes(normalized);
     },
 
-    // FIXED: Better statistical calculations
+    // Statistical calculations
     calculateMedian(values) {
         if (!values || values.length === 0) return 0;
         const valid = values.filter(v => typeof v === 'number' && !isNaN(v) && isFinite(v));
@@ -130,15 +156,15 @@ const Utils = {
         return valid.reduce((sum, val) => sum + val, 0) / valid.length;
     },
 
-    // FIXED: Enhanced dot product with proper validation
+    // Enhanced dot product with proper validation
     dotProduct(a, b) {
         if (!Array.isArray(a) || !Array.isArray(b)) {
-            console.warn('Invalid input to dotProduct - not arrays');
+            if (isDebug()) console.warn('Invalid input to dotProduct - not arrays');
             return 0;
         }
         
         if (a.length !== b.length) {
-            console.warn(`Vector length mismatch: ${a.length} vs ${b.length}`);
+            if (isDebug()) console.warn(`Vector length mismatch: ${a.length} vs ${b.length}`);
             return 0;
         }
         
@@ -152,81 +178,51 @@ const Utils = {
         return sum;
     },
 
-    // FIXED: Enhanced cosine similarity with detailed debugging
+    // Compares two feature vectors using cosine similarity.
+    // If vector lengths differ, they are aligned to the overlapping prefix
+    // (min length) so a single length mismatch can't silently fail auth.
     cosineSimilarity(a, b) {
         try {
-            // Input validation
             if (!Array.isArray(a) || !Array.isArray(b)) {
-                console.error('Cosine similarity: inputs must be arrays');
+                if (isDebug()) console.error('Cosine similarity: inputs must be arrays');
                 return 0;
             }
 
             if (a.length === 0 || b.length === 0) {
-                console.error('Cosine similarity: empty arrays provided');
+                if (isDebug()) console.error('Cosine similarity: empty arrays provided');
                 return 0;
             }
 
-            if (a.length !== b.length) {
-                console.error(`Cosine similarity: length mismatch ${a.length} vs ${b.length}`);
+            // Length mismatch: compare over the overlapping prefix.
+            const len = Math.min(a.length, b.length);
+            const alignedA = len === a.length ? a : a.slice(0, len);
+            const alignedB = len === b.length ? b : b.slice(0, len);
+
+            const dotProd = this.dotProduct(alignedA, alignedB);
+            const magA = Math.sqrt(this.dotProduct(alignedA, alignedA));
+            const magB = Math.sqrt(this.dotProduct(alignedB, alignedB));
+
+            if (magA === 0 || magB === 0) {
+                if (isDebug()) console.error('Cosine similarity: zero magnitude vector');
                 return 0;
             }
 
-            console.log('=== COSINE SIMILARITY DEBUG ===');
-            console.log('Vector A (length:', a.length, '):', a);
-            console.log('Vector B (length:', b.length, '):', b);
-
-            // Calculate dot product and magnitudes
-            const dotProd = this.dotProduct(a, b);
-            const magA = Math.sqrt(this.dotProduct(a, a));
-            const magB = Math.sqrt(this.dotProduct(b, b));
-
-            console.log('Dot product A·B:', dotProd);
-            console.log('Magnitude |A|:', magA);
-            console.log('Magnitude |B|:', magB);
-
-            // Check for zero magnitude vectors
-            if (magA === 0) {
-                console.error('Vector A has zero magnitude');
-                return 0;
-            }
-            
-            if (magB === 0) {
-                console.error('Vector B has zero magnitude'); 
-                return 0;
-            }
-
-            // Calculate similarity
             const similarity = dotProd / (magA * magB);
-            console.log('Raw similarity:', similarity);
 
-            // Validate result
             if (isNaN(similarity) || !isFinite(similarity)) {
-                console.error('Invalid similarity result:', similarity);
+                if (isDebug()) console.error('Cosine similarity: invalid result', similarity);
                 return 0;
             }
 
-            // Clamp to valid range [-1, 1]
-            const clampedSimilarity = Math.max(-1, Math.min(1, similarity));
-            console.log('Final similarity:', clampedSimilarity);
-            console.log('=== END COSINE SIMILARITY DEBUG ===');
-            
-            return clampedSimilarity;
-            
+            return Math.max(-1, Math.min(1, similarity));
         } catch (error) {
-            console.error('Cosine similarity calculation failed:', error);
+            if (isDebug()) console.error('Cosine similarity calculation failed:', error);
             return 0;
         }
-    },
-
-    async hash256(data) {
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(data));
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 };
 
-// Cryptography Service (unchanged)
+// Cryptography Service
 class CryptoService {
     static async #getPasswordKey(password) {
         const encoder = new TextEncoder();
@@ -235,7 +231,7 @@ class CryptoService {
             encoder.encode(password),
             'PBKDF2',
             false,
-            ['deriveKey']
+            ['deriveKey', 'deriveBits']
         );
     }
 
@@ -252,6 +248,24 @@ class CryptoService {
             false,
             keyUsage
         );
+    }
+
+    // Derives a verifier (PBKDF2 output) for the master-password record.
+    // PBKDF2 is intentionally slow, unlike a plain SHA-256 hash, so the stored
+    // master record resists offline brute-force attacks on the hash.
+    static async deriveMasterVerifier(password, salt) {
+        const passwordKey = await this.#getPasswordKey(password);
+        const bits = await crypto.subtle.deriveBits(
+            {
+                name: 'PBKDF2',
+                salt,
+                iterations: CONFIG.CRYPTO.PBKDF2_ITERATIONS,
+                hash: 'SHA-256'
+            },
+            passwordKey,
+            CONFIG.CRYPTO.AES_KEY_LENGTH
+        );
+        return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
     static async encrypt(data, password) {
@@ -303,7 +317,7 @@ class CryptoService {
     }
 }
 
-// Database Service (unchanged)
+// Database Service
 class DynamicsDatabase {
     constructor() {
         this.dbName = CONFIG.DATABASE.NAME;
@@ -317,7 +331,7 @@ class DynamicsDatabase {
             request.onerror = () => reject(new DatabaseError('Failed to open database', 'DB_OPEN_FAILED'));
             request.onsuccess = () => resolve(request.result);
             request.onupgradeneeded = (event) => {
-                const db = event.target.result;
+                const db = /** @type {*} */ (event.target).result;
                 Object.values(this.stores).forEach(storeName => {
                     if (!db.objectStoreNames.contains(storeName)) {
                         db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
@@ -334,8 +348,10 @@ class DynamicsDatabase {
             const store = transaction.objectStore(storeName);
             const request = store.add(data);
             request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(new DatabaseError('Save failed', 'SAVE_FAILED'));
+            request.onerror = () => { db.close(); reject(new DatabaseError('Save failed', 'SAVE_FAILED')); };
             transaction.oncomplete = () => db.close();
+            transaction.onerror = () => { try { db.close(); } catch {} };
+            transaction.onabort = () => { try { db.close(); } catch {} };
         });
     }
 
@@ -346,8 +362,10 @@ class DynamicsDatabase {
             const store = transaction.objectStore(storeName);
             const request = store.getAll();
             request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(new DatabaseError('Load failed', 'LOAD_FAILED'));
+            request.onerror = () => { db.close(); reject(new DatabaseError('Load failed', 'LOAD_FAILED')); };
             transaction.oncomplete = () => db.close();
+            transaction.onerror = () => { try { db.close(); } catch {} };
+            transaction.onabort = () => { try { db.close(); } catch {} };
         });
     }
 
@@ -358,49 +376,55 @@ class DynamicsDatabase {
             const store = transaction.objectStore(storeName);
             const request = store.clear();
             request.onsuccess = () => resolve(true);
-            request.onerror = () => reject(new DatabaseError('Clear failed', 'CLEAR_FAILED'));
+            request.onerror = () => { db.close(); reject(new DatabaseError('Clear failed', 'CLEAR_FAILED')); };
             transaction.oncomplete = () => db.close();
+            transaction.onerror = () => { try { db.close(); } catch {} };
+            transaction.onabort = () => { try { db.close(); } catch {} };
         });
     }
 }
 
-// COMPLETELY REWRITTEN: Feature Extractor with proper event pairing
+// Feature Extractor with proper event pairing
 class FeatureExtractor {
     static extract(keystrokes) {
-        console.log('=== FEATURE EXTRACTION DEBUG ===');
-        console.log('Input keystrokes:', keystrokes.length, 'events');
-        
+        if (isDebug()) console.log('=== FEATURE EXTRACTION DEBUG ===');
+        if (isDebug()) console.log('Input keystrokes:', keystrokes?.length, 'events');
+
         if (!keystrokes || keystrokes.length === 0) {
             throw new DynamicsError('No keystroke data provided', 'NO_DATA');
         }
 
         // Create proper event pairs
         const eventPairs = this.#createEventPairs(keystrokes);
-        console.log('Created event pairs:', eventPairs.length);
-        
+        if (isDebug()) console.log('Created event pairs:', eventPairs.length);
+
         if (eventPairs.length < 2) {
             throw new DynamicsError('Need at least 2 complete keystroke pairs', 'INSUFFICIENT_PAIRS');
         }
-        
+
         // Extract features from pairs
         const features = this.#extractTimingFeatures(eventPairs);
-        
-        console.log('Final feature vector:', features);
-        console.log('Feature count:', features.length);
-        console.log('=== END FEATURE EXTRACTION DEBUG ===');
-        
+
+        if (isDebug()) {
+            console.log('Final feature vector:', features);
+            console.log('Feature count:', features.length);
+            console.log('=== END FEATURE EXTRACTION DEBUG ===');
+        }
+
         return features;
     }
 
-    // FIXED: Create proper keydown-keyup pairs
+    // Create proper keydown-keyup pairs
     static #createEventPairs(keystrokes) {
         const pairs = [];
         const downEvents = keystrokes.filter(e => e.type === 'keydown').sort((a, b) => a.timestamp - b.timestamp);
         const upEvents = keystrokes.filter(e => e.type === 'keyup').sort((a, b) => a.timestamp - b.timestamp);
-        
-        console.log('Down events:', downEvents.map(e => `${e.key}@${Math.round(e.timestamp)}`));
-        console.log('Up events:', upEvents.map(e => `${e.key}@${Math.round(e.timestamp)}`));
-        
+
+        if (isDebug()) {
+            console.log('Down events:', downEvents.map(e => `${e.key}@${Math.round(e.timestamp)}`));
+            console.log('Up events:', upEvents.map(e => `${e.key}@${Math.round(e.timestamp)}`));
+        }
+
         // For each keydown, find the next keyup of the same key
         for (const downEvent of downEvents) {
             const matchingUpEvent = upEvents.find(upEvent => 
@@ -426,15 +450,13 @@ class FeatureExtractor {
         
         // Sort pairs by downTime to maintain order
         pairs.sort((a, b) => a.downTime - b.downTime);
-        
-        console.log('Event pairs created:', pairs.map(p => 
-            `${p.key}: dwell=${Math.round(p.dwellTime)}ms`
-        ));
-        
+
+        if (isDebug()) console.log('Event pairs created:', pairs.map(p => `${p.key}: dwell=${Math.round(p.dwellTime)}ms`));
+
         return pairs;
     }
 
-    // FIXED: Extract consistent timing features
+    // Extract consistent timing features
     static #extractTimingFeatures(eventPairs) {
         const features = [];
         
@@ -449,8 +471,8 @@ class FeatureExtractor {
             // Convert to seconds and ensure minimum value
             const normalizedDwell = Math.max(0.001, dwellTime / 1000);
             features.push(normalizedDwell);
-            
-            console.log(`Dwell time for '${pair.key}': ${dwellTime}ms -> ${normalizedDwell}s`);
+
+            if (isDebug()) console.log(`Dwell time for '${pair.key}': ${dwellTime}ms -> ${normalizedDwell}s`);
         }
         
         // Flight times (time between consecutive key presses)
@@ -468,8 +490,8 @@ class FeatureExtractor {
             // Convert to seconds and ensure minimum value
             const normalizedFlight = Math.max(0.001, flightTime / 1000);
             features.push(normalizedFlight);
-            
-            console.log(`Flight time ${currentPair.key} -> ${nextPair.key}: ${flightTime}ms -> ${normalizedFlight}s`);
+
+            if (isDebug()) console.log(`Flight time ${currentPair.key} -> ${nextPair.key}: ${flightTime}ms -> ${normalizedFlight}s`);
         }
         
         // Validate features
@@ -480,7 +502,7 @@ class FeatureExtractor {
         // Check for invalid values
         const invalidFeatures = features.filter(f => !Number.isFinite(f) || f <= 0);
         if (invalidFeatures.length > 0) {
-            console.warn('Invalid features detected:', invalidFeatures);
+            if (isDebug()) console.warn('Invalid features detected:', invalidFeatures);
             // Replace invalid features with defaults
             for (let i = 0; i < features.length; i++) {
                 if (!Number.isFinite(features[i]) || features[i] <= 0) {
@@ -488,17 +510,19 @@ class FeatureExtractor {
                 }
             }
         }
-        
-        console.log('Final validated features:', features);
+
+        if (isDebug()) console.log('Final validated features:', features);
         return features;
     }
 }
 
-// Keystroke Capture (unchanged)
+const IS_BROWSER = typeof document !== 'undefined';
+
+// Keystroke Capture
 class KeystrokeCapture {
     constructor() {
         this.#reset();
-        this.#setupEventListeners();
+        if (IS_BROWSER) this.#setupEventListeners();
     }
 
     #keystrokes = [];
@@ -516,14 +540,25 @@ class KeystrokeCapture {
         this.#activeKeys.clear();
     }
 
-    #setupEventListeners() {
-        document.addEventListener('keydown', (event) => {
-            this.#handleKeyEvent(event, 'keydown');
-        }, { passive: false, capture: true });
+    #onKeydown = null;
+    #onKeyup = null;
 
-        document.addEventListener('keyup', (event) => {
-            this.#handleKeyEvent(event, 'keyup');
-        }, { passive: false, capture: true });
+    #setupEventListeners() {
+        if (!IS_BROWSER) return;
+        this.#onKeydown = (event) => this.#handleKeyEvent(event, 'keydown');
+        this.#onKeyup = (event) => this.#handleKeyEvent(event, 'keyup');
+        document.addEventListener('keydown', this.#onKeydown, { passive: false, capture: true });
+        document.addEventListener('keyup', this.#onKeyup, { passive: false, capture: true });
+    }
+
+    destroy() {
+        if (IS_BROWSER) {
+            if (this.#onKeydown) document.removeEventListener('keydown', this.#onKeydown, { capture: true });
+            if (this.#onKeyup) document.removeEventListener('keyup', this.#onKeyup, { capture: true });
+        }
+        this.#onKeydown = null;
+        this.#onKeyup = null;
+        this.#reset();
     }
 
     #handleKeyEvent(event, eventType) {
@@ -545,7 +580,8 @@ class KeystrokeCapture {
 
         if (this.#startTime && (timestamp - this.#startTime) > CONFIG.TIMING.SAMPLE_TIMEOUT) {
             this.stopRecording();
-            throw new DynamicsError('Recording timeout', 'TIMEOUT');
+            if (isDebug()) console.warn('Keystroke recording timed out');
+            return;
         }
 
         this.#keystrokes.push({
@@ -556,7 +592,9 @@ class KeystrokeCapture {
             target: event.target.id || 'unknown'
         });
 
-        console.log(`Recorded: ${eventType} - ${key} at ${Math.round(timestamp)}`);
+        if (isDebug()) {
+            console.log(`Recorded: ${eventType} - ${key} at ${Math.round(timestamp)}`);
+        }
     }
 
     startRecording(targetElement = null) {
@@ -564,13 +602,13 @@ class KeystrokeCapture {
         this.#isRecording = true;
         this.#startTime = Utils.getHighResTime();
         this.#targetElement = targetElement;
-        console.log('Started recording keystrokes', targetElement ? `for element: ${targetElement.id}` : '(global)');
+        if (isDebug()) console.log('Started recording keystrokes', targetElement ? `for element: ${targetElement.id}` : '(global)');
     }
 
     stopRecording() {
         this.#isRecording = false;
         const keystrokes = [...this.#keystrokes];
-        console.log(`Stopped recording. Captured ${keystrokes.length} events`);
+        if (isDebug()) console.log(`Stopped recording. Captured ${keystrokes.length} events`);
         return keystrokes;
     }
 
@@ -583,7 +621,7 @@ class KeystrokeCapture {
     }
 }
 
-// Secure Key Manager (unchanged)
+// Secure Key Manager
 class SecureKeyManager {
     #masterKey = null;
 
@@ -596,7 +634,7 @@ class SecureKeyManager {
     hasKey() { return this.#masterKey !== null; }
 }
 
-// CLEANED UP: Main Keystroke Dynamics System
+// Main Keystroke Dynamics System
 class KeystrokeDynamics {
     #database;
     #keyManager;
@@ -609,11 +647,17 @@ class KeystrokeDynamics {
         this.#database = new DynamicsDatabase();
         this.#keyManager = new SecureKeyManager();
         this.#keystrokeCapture = new KeystrokeCapture();
-        this.#threshold = CONFIG.BIOMETRICS.DEFAULT_THRESHOLD;
         this.#trainingPhrase = null;
+        // Persist threshold across reloads
+        const savedThreshold = safeStorage.get('dynamics_threshold');
+        const parsed = parseFloat(savedThreshold);
+        this.#threshold = Number.isFinite(parsed)
+            ? Math.max(0.1, Math.min(0.95, parsed))
+            : CONFIG.BIOMETRICS.DEFAULT_THRESHOLD;
     }
 
     #validateBrowser() {
+        if (typeof window === 'undefined') return;
         if (!window.indexedDB) throw new Error('IndexedDB not supported in this browser');
         if (!window.crypto?.subtle) throw new Error('Web Crypto API not supported in this browser');
     }
@@ -622,7 +666,7 @@ class KeystrokeDynamics {
         try {
             this.#keyManager.setKey(masterPassword);
             this.#trainingPhrase = phrase;
-            if (!this.isReady()) {
+            if (!(await this.isReady())) {
                 await this.#createMasterRecord(masterPassword, phrase);
             }
             return true;
@@ -639,10 +683,10 @@ class KeystrokeDynamics {
                 this.#trainingPhrase = phrase;
                 return phrase;
             }
-            return null;
+            throw new DynamicsError('Invalid master password or no master record found', 'AUTH_FAILED');
         } catch (error) {
-            console.error('Authentication failed:', error);
-            return null;
+            if (error instanceof DynamicsError) throw error;
+            throw new DynamicsError(`Authentication failed: ${error.message}`, 'AUTH_FAILED');
         }
     }
 
@@ -665,6 +709,11 @@ class KeystrokeDynamics {
             const signature = features.join(',');
             const encrypted = await CryptoService.encrypt(signature, this.#keyManager.getKey());
 
+            const existing = await this.#database.loadAll(this.#database.stores.SIGNATURES);
+            if (existing.length >= CONFIG.BIOMETRICS.MAX_SAMPLES) {
+                throw new DynamicsError('Maximum training samples reached', 'SAMPLE_LIMIT');
+            }
+
             await this.#database.save(this.#database.stores.SIGNATURES, {
                 signature: encrypted,
                 timestamp: Date.now(),
@@ -672,7 +721,7 @@ class KeystrokeDynamics {
                 featureCount: features.length
             });
 
-            console.log('Sample added successfully');
+            if (isDebug()) console.log('Sample added successfully');
             return true;
         } catch (error) {
             console.error('Add sample error:', error);
@@ -680,14 +729,33 @@ class KeystrokeDynamics {
         }
     }
 
-    async verify() {
+    async verify(expectedPhrase = null) {
         try {
             const keystrokes = this.stopRecording();
             if (keystrokes.length === 0) {
                 throw new DynamicsError('No keystroke data recorded', 'NO_DATA');
             }
 
-            console.log('=== VERIFICATION DEBUG ===');
+            // Optionally validate that the typed phrase matches expectations
+            if (expectedPhrase !== null) {
+                const reverse = {
+                    'period': '.', 'at': '@', 'minus': '-',
+                    'underscore': '_', 'space': ' '
+                };
+                const downKeys = keystrokes
+                    .filter(e => e.type === 'keydown')
+                    .map(e => reverse[e.key] || e.key);
+                const typedString = downKeys.join('');
+                const expectedLower = expectedPhrase.toLowerCase();
+                if (typedString !== expectedLower) {
+                    throw new DynamicsError(
+                        `Phrase mismatch: expected "${expectedPhrase}"`,
+                        'PHRASE_MISMATCH'
+                    );
+                }
+            }
+
+            if (isDebug()) console.log('=== VERIFICATION DEBUG ===');
             const features = FeatureExtractor.extract(keystrokes);
             const signatures = await this.#loadAllSignatures();
             
@@ -695,38 +763,36 @@ class KeystrokeDynamics {
                 throw new DynamicsError('Insufficient training data', 'INSUFFICIENT_SAMPLES');
             }
 
-            console.log('Current features:', features);
-            console.log('Stored signatures:', signatures);
+            if (isDebug()) {
+                console.log('Current features:', features);
+                console.log('Stored signatures:', signatures);
+            }
 
             const similarities = signatures.map((sig, index) => {
-                console.log(`\n--- Comparing with signature ${index} ---`);
+                if (isDebug()) console.log(`\\n--- Comparing with signature ${index} ---`);
                 const similarity = Utils.cosineSimilarity(features, sig);
-                console.log(`Similarity ${index}: ${similarity}`);
+                if (isDebug()) console.log(`Similarity ${index}: ${similarity}`);
                 return similarity;
             });
 
             const medianSimilarity = Utils.calculateMedian(similarities);
             const maxSimilarity = Math.max(...similarities);
-            
-            console.log('\n=== VERIFICATION RESULTS ===');
-            console.log('All similarities:', similarities);
-            console.log('Median similarity:', medianSimilarity);
-            console.log('Max similarity:', maxSimilarity);
-            console.log('Threshold:', this.#threshold);
-            console.log('Is authentic:', medianSimilarity >= this.#threshold);
-            console.log('=== END VERIFICATION DEBUG ===');
+
+            if (isDebug()) {
+                console.log('\n=== VERIFICATION RESULTS ===');
+                console.log('All similarities:', similarities);
+                console.log('Median similarity:', medianSimilarity);
+                console.log('Max similarity:', maxSimilarity);
+                console.log('Threshold:', this.#threshold);
+                console.log('Is authentic:', medianSimilarity >= this.#threshold);
+                console.log('=== END VERIFICATION DEBUG ===');
+            }
 
             return {
                 isAuthentic: medianSimilarity >= this.#threshold,
                 similarity: medianSimilarity,
                 threshold: this.#threshold,
-                sampleCount: signatures.length,
-                debug: {
-                    similarities,
-                    max: maxSimilarity,
-                    features,
-                    signatures
-                }
+                sampleCount: signatures.length
             };
         } catch (error) {
             console.error('Verification error:', error);
@@ -750,7 +816,8 @@ class KeystrokeDynamics {
             };
             this.#threshold = thresholds[level] || CONFIG.BIOMETRICS.DEFAULT_THRESHOLD;
         }
-        console.log(`Threshold set to: ${Math.round(this.#threshold * 100)}%`);
+        safeStorage.set('dynamics_threshold', this.#threshold.toString());
+        if (isDebug()) console.log(`Threshold set to: ${Math.round(this.#threshold * 100)}%`);
     }
 
     async reset() {
@@ -762,7 +829,8 @@ class KeystrokeDynamics {
             ]);
             this.#keyManager.clearKey();
             this.#trainingPhrase = null;
-            localStorage.removeItem('dynamics_system_ready');
+            safeStorage.remove('dynamics_system_ready');
+            safeStorage.remove('dynamics_threshold');
             return true;
         } catch (error) {
             throw new DynamicsError(`Reset failed: ${error.message}`, 'RESET_FAILED');
@@ -774,20 +842,37 @@ class KeystrokeDynamics {
     }
 
     async #createMasterRecord(password, phrase) {
-        const hashedKey = await Utils.hash256(password);
+        const saltBytes = crypto.getRandomValues(new Uint8Array(CONFIG.CRYPTO.SALT_LENGTH));
+        const verifier = await CryptoService.deriveMasterVerifier(password, saltBytes);
         await this.#database.save(this.#database.stores.MASTER, {
-            keyHash: hashedKey,
+            salt: Utils.buffToBase64(saltBytes),
+            verifier,
             phrase,
             timestamp: Date.now()
         });
-        localStorage.setItem('dynamics_system_ready', 'true');
+        safeStorage.set('dynamics_system_ready', 'true');
+        safeStorage.set('dynamics_threshold', this.#threshold.toString());
     }
 
     async #loadMasterRecord(password) {
-        const hashedKey = await Utils.hash256(password);
         const records = await this.#database.loadAll(this.#database.stores.MASTER);
-        const record = records.find(r => r.keyHash === hashedKey);
-        return record?.phrase || null;
+        for (const record of records) {
+            if (!record.salt || !record.verifier) continue;
+            const saltBytes = Utils.base64ToBuff(record.salt);
+            const verifier = await CryptoService.deriveMasterVerifier(password, saltBytes);
+            // Constant-time-ish comparison to resist timing attacks
+            const a = verifier;
+            const b = record.verifier;
+            if (a.length !== b.length) continue;
+            let diff = 0;
+            for (let i = 0; i < a.length; i++) {
+                diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+            }
+            if (diff === 0) {
+                return record.phrase || null;
+            }
+        }
+        return null;
     }
 
     async #loadAllSignatures() {
@@ -807,14 +892,14 @@ class KeystrokeDynamics {
                 });
                 signatures.push(features);
             } catch (error) {
-                console.warn('Failed to decrypt signature, skipping:', error);
+                if (isDebug()) console.warn('Failed to decrypt signature, skipping:', error);
             }
         }
 
         return signatures;
     }
 
-    // Credential management methods (unchanged but cleaned up)
+    // Credential management methods
     async saveCredentials(site, username, password) {
         if (!this.#keyManager.hasKey()) throw new DynamicsError('Master key required', 'NO_MASTER_KEY');
         const credentials = { username, password };
@@ -835,24 +920,43 @@ class KeystrokeDynamics {
     get phrase() { return this.#trainingPhrase; }
     get threshold() { return this.#threshold; }
     get isRecording() { return this.#keystrokeCapture.isRecording(); }
-    isReady() { return localStorage.getItem('dynamics_system_ready') === 'true'; }
-}
-
-// Browser compatibility check
-function checkBrowserSupport() {
-    const required = ['indexedDB', 'crypto.subtle', 'performance.now', 'TextEncoder', 'TextDecoder'];
-    const missing = required.filter(feature => {
-        try { return !eval(`window.${feature}`); } catch { return true; }
-    });
-    if (missing.length > 0) {
-        throw new Error(`Browser missing required features: ${missing.join(', ')}`);
+    async isReady() {
+        if (safeStorage.get('dynamics_system_ready') !== 'true') return false;
+        // Double-check IndexedDB to prevent localStorage/database drift
+        try {
+            const records = await this.#database.loadAll(this.#database.stores.MASTER);
+            return records.length > 0;
+        } catch {
+            return false;
+        }
     }
 }
 
-try {
-    checkBrowserSupport();
-} catch (error) {
-    console.error('Browser compatibility check failed:', error);
+// Browser compatibility check (browser-only)
+if (typeof window !== 'undefined') {
+    function checkBrowserSupport() {
+        const required = ['indexedDB', 'crypto.subtle', 'performance.now', 'TextEncoder', 'TextDecoder'];
+        const missing = required.filter(feature => {
+            try {
+                const keyPath = feature.split('.');
+                let value = window;
+                for (const key of keyPath) {
+                    if (value == null || !(key in value)) return true;
+                    value = value[key];
+                }
+                return !value;
+            } catch { return true; }
+        });
+        if (missing.length > 0) {
+            throw new Error(`Browser missing required features: ${missing.join(', ')}`);
+        }
+    }
+
+    try {
+        checkBrowserSupport();
+    } catch (error) {
+        console.error('Browser compatibility check failed:', error);
+    }
 }
 
 // Exports
