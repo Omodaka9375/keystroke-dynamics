@@ -340,6 +340,12 @@ console.log(result);
 */
 ```
 
+#### `authenticate(masterPassword)`
+Return the stored training phrase for a correct master password. **Throws** `DynamicsError` on failure.
+```javascript
+const phrase = await auth.authenticate('secure123');
+```
+
 #### `setThreshold(level)`
 Configure security level. Persisted to localStorage across page reloads.
 ```javascript
@@ -354,6 +360,26 @@ await auth.isReady()   // System initialized? (async)
 auth.isRecording       // Currently capturing?
 auth.phrase            // Training phrase
 auth.threshold         // Current threshold
+```
+
+### Cleanup
+
+#### `reset()`
+Delete all stored data (signatures, master key, credentials) and clear localStorage flags.
+```javascript
+await auth.reset();
+```
+
+#### `clearSignatures()`
+Remove only training samples, keeping the master record.
+```javascript
+await auth.clearSignatures();
+```
+
+#### `destroy()`
+Remove all DOM event listeners. Call when the authentication instance is no longer needed.
+```javascript
+auth.destroy();
 ```
 
 ## 📊 Performance Tips
@@ -543,7 +569,7 @@ auth.onVerify = (result) => {
 **Library (done):**
 - [x] Error handling implemented — typed errors with `DynamicsError`, `CryptoError`, `DatabaseError`, all with `.code` properties (`AUTH_FAILED`, `PHRASE_MISMATCH`, `NO_DATA`, `INSUFFICIENT_SAMPLES`, etc.)
 - [x] User training flow tested — 44 automated tests covering training, verification, edge cases
-- [x] Performance optimized — Terser-minified (17.4 KB, 52% smaller), chunked Base64 encoding, debug logging gated behind `isDebug()`, IndexedDB connections closed on error/abort, no listener leaks
+- [x] Performance optimized — Terser-minified (~17 KB, 52% smaller), chunked Base64 encoding, debug logging gated behind `isDebug()`, IndexedDB connections closed on error/abort, no listener leaks
 - [x] Security audit completed — constant-time verifier comparison, raw signature vectors removed from `verify()` output, `safeStorage` wrapper with try/catch, phrase-validation via `verify(expectedPhrase)`, SSR-safe (no `document`/`window` crash in Node)
 
 **Your application (required before going live):**
@@ -582,8 +608,18 @@ Contributions are welcome! Here's how to get started:
 ```bash
 git clone https://github.com/Omodaka9375/keystroke-dynamics.git
 cd keystroke-dynamics
-
+npm install
 ```
+
+**Available scripts:**
+
+| Command | Description |
+|---|---|
+| `npm test` | Run all 44 tests |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run typecheck` | TypeScript type-check the library |
+| `npm run build` | Minify to `keystroke-dynamics.min.js` |
+| `npm run dev` | Tests with verbose output |
 
 ## 📄 License
 
