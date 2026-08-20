@@ -371,13 +371,16 @@
             box-shadow: var(--shadow-overlay); border: 1px solid var(--surface-200);
             animation: slideIn .35s var(--ease-out); font-size: .835rem; font-weight: 500;
             display: flex; align-items: center; gap: var(--s-3);
-            pointer-events: auto;
+            pointer-events: auto; position: relative; overflow: hidden;
         }
-        .status-message::before { content: ''; width: 4px; height: 100%; border-radius: 2px; background: var(--brand-500); position: absolute; left: 0; top: 0; }
-        .status-message.error { border-left: 4px solid var(--red-500); }
-        .status-message.warning { border-left: 4px solid var(--amber-500); }
-        .status-message.success { border-left: 4px solid var(--green-500); }
-        .status-message.info { border-left: 4px solid var(--brand-500); }
+        .status-message::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 4px; background: var(--brand-500);
+        }
+        .status-message.error::before  { background: var(--red-500); }
+        .status-message.warning::before { background: var(--amber-500); }
+        .status-message.success::before { background: var(--green-500); }
+        .status-message.info::before    { background: var(--brand-500); }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         /* ── Loading Overlay ── */
