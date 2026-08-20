@@ -8,11 +8,11 @@
     <style>
         :root {
             /* ── Brand Palette ── */
-            --brand-400: #a78bfa;
-            --brand-500: #8b5cf6;
-            --brand-600: #7c3aed;
-            --brand-700: #6d28d9;
-            --brand-800: #5b21b6;
+            --brand-400: #93c5fd;
+            --brand-500: #60a5fa;
+            --brand-600: #3b82f6;
+            --brand-700: #2563eb;
+            --brand-800: #1d4ed8;
 
             /* ── Surface / Neutral ── */
             --surface-0: #ffffff;
@@ -57,7 +57,7 @@
             --shadow-card: 0 1px 3px rgb(0 0 0 / .06), 0 1px 2px rgb(0 0 0 / .04);
             --shadow-elevated: 0 4px 16px rgb(0 0 0 / .08), 0 2px 4px rgb(0 0 0 / .04);
             --shadow-overlay: 0 20px 60px rgb(0 0 0 / .15);
-            --glow-brand: 0 0 0 3px rgb(139 92 246 / .25);
+            --glow-brand: 0 0 0 3px rgb(59 130 246 / .25);
 
             /* ── Transitions ── */
             --ease-out: cubic-bezier(.16,1,.3,1);
@@ -78,8 +78,8 @@
             background: var(--surface-50);
             min-height: 100vh;
             background-image:
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgb(139 92 246 / .08), transparent),
-                radial-gradient(ellipse 60% 40% at 80% 80%, rgb(139 92 246 / .04), transparent);
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgb(59 130 246 / .08), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgb(59 130 246 / .04), transparent);
             background-attachment: fixed;
         }
 
@@ -168,24 +168,13 @@
         .hero .badge {
             display: inline-flex; align-items: center; gap: var(--s-2);
             padding: var(--s-1) var(--s-4); border-radius: 99px;
-            background: rgb(139 92 246 / .1); color: var(--brand-700);
+            background: rgb(59 130 246 / .1); color: var(--brand-700);
             font-size: .8rem; font-weight: 600; margin-bottom: var(--s-6);
             letter-spacing: .04em; text-transform: uppercase;
         }
-        .hero .badge .dot {
-            width: 7px; height: 7px; border-radius: 50%;
-            background: var(--brand-500);
-            animation: pulse-dot 2s infinite;
-        }
-        @keyframes pulse-dot { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
         .hero h1 {
             font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 800;
             line-height: 1.1; letter-spacing: -.03em; margin-bottom: var(--s-4);
-        }
-        .hero h1 .gradient-text {
-            background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-400) 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
         .hero p { font-size: 1.1rem; color: var(--surface-500); max-width: 460px; margin: 0 auto var(--s-10); line-height: 1.6; }
 
@@ -197,15 +186,8 @@
             box-shadow: var(--shadow-card); transition: all .2s var(--ease-out);
         }
         .feature:hover { transform: translateY(-3px); box-shadow: var(--shadow-elevated); }
-        .feature .feat-icon {
-            width: 48px; height: 48px; border-radius: var(--r-md);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem;
-        }
-        .feature .feat-icon.fast  { background: rgb(34 197 94 / .12); }
-        .feature .feat-icon.lock  { background: rgb(139 92 246 / .12); }
-        .feature .feat-icon.chart { background: rgb(251 191 36 / .12); }
-        .feature .feat-label { font-weight: 600; font-size: .9rem; color: var(--surface-800); }
+        /* ── Feature Cards ── */
+        .feat-label { font-weight: 600; font-size: .9rem; color: var(--surface-800); }
 
         /* ── Buttons ── */
         .btn {
@@ -218,11 +200,10 @@
         .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
         .btn.primary {
             background: var(--brand-600); color: white;
-            box-shadow: 0 2px 8px rgb(124 58 237 / .3);
+            box-shadow: 0 1px 3px rgb(0 0 0 / .15);
         }
         .btn.primary:hover:not(:disabled) {
-            background: var(--brand-700); transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgb(124 58 237 / .4);
+            background: var(--brand-700);
         }
         .btn.primary:focus-visible { box-shadow: var(--glow-brand); }
         .btn.secondary {
@@ -261,7 +242,7 @@
             background: linear-gradient(135deg, var(--brand-600), var(--brand-500));
             color: white; display: flex; align-items: center; justify-content: center;
             font-weight: 700; font-size: 1rem; flex-shrink: 0;
-            box-shadow: 0 2px 10px rgb(124 58 237 / .25);
+            box-shadow: 0 2px 10px rgb(59 130 246 / .25);
         }
         .step-content { flex: 1; }
         .step-content h3 { margin-bottom: var(--s-3); font-size: 1.2rem; font-weight: 600; }
@@ -279,8 +260,8 @@
             background: var(--surface-0); text-align: center;
         }
         .security-option input[type="radio"]:checked + .security-label {
-            border-color: var(--brand-500); background: rgb(139 92 246 / .06);
-            box-shadow: 0 0 0 3px rgb(139 92 246 / .1);
+            border-color: var(--brand-500); background: rgb(59 130 246 / .06);
+            box-shadow: 0 0 0 3px rgb(59 130 246 / .1);
         }
         .security-label:hover { border-color: var(--brand-400); }
         .sec-level-indicator {
@@ -305,7 +286,7 @@
         #customThreshold::-webkit-slider-thumb {
             appearance: none; width: 20px; height: 20px; border-radius: 50%;
             background: var(--brand-600); cursor: pointer;
-            box-shadow: 0 2px 6px rgb(124 58 237 / .3);
+            box-shadow: 0 1px 3px rgb(0 0 0 / .2);
         }
         #customThreshold::-moz-range-thumb {
             width: 20px; height: 20px; border-radius: 50%;
@@ -316,8 +297,8 @@
         .current-settings {
             display: flex; justify-content: center; gap: var(--s-12);
             margin: var(--s-5) 0; padding: var(--s-4);
-            background: rgb(139 92 246 / .06); border-radius: var(--r-lg);
-            border: 1px solid rgb(139 92 246 / .12);
+            background: rgb(59 130 246 / .06); border-radius: var(--r-lg);
+            border: 1px solid rgb(59 130 246 / .12);
         }
         .setting-info { display: flex; flex-direction: column; align-items: center; }
         .setting-info .label { font-size: .75rem; color: var(--brand-600); text-transform: uppercase; font-weight: 600; letter-spacing: .04em; }
@@ -348,7 +329,7 @@
         /* ── Input Status ── */
         .input-status {
             margin-top: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
-            background: rgb(139 92 246 / .06); border: 1px solid rgb(139 92 246 / .12);
+            background: rgb(59 130 246 / .06); border: 1px solid rgb(59 130 246 / .12);
             transition: all .2s var(--ease-out);
         }
         .status-text { font-size: .85rem; color: var(--brand-700); font-weight: 500; }
@@ -434,7 +415,7 @@
         @media (prefers-color-scheme: dark) {
             body {
                 background: var(--surface-950);
-                background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgb(139 92 246 / .12), transparent);
+                background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgb(59 130 246 / .08), transparent);
                 color: var(--surface-100);
             }
             .card, .feature, .training-area, .info-card, .status-message, .security-label, .form-group input,
@@ -477,7 +458,7 @@
             .card > p, .step-content > p, .hero p { color: var(--surface-400); }
             .retry-info { background: rgb(251 191 36 / .08); border-color: rgb(251 191 36 / .2); }
             .retry-header { color: var(--amber-400); }
-            .input-status { background: rgb(139 92 246 / .08); border-color: rgb(139 92 246 / .15); }
+            .input-status { background: rgb(59 130 246 / .08); border-color: rgb(59 130 246 / .15); }
             .input-status .status-text { color: var(--brand-400); }
             .input-status.analyzing { background: rgb(251 191 36 / .08); border-color: rgb(251 191 36 / .2); }
             .input-status.analyzing .status-text { color: var(--amber-400); }
@@ -493,7 +474,7 @@
     <div class="container">
         <nav class="nav">
             <div class="nav-brand">
-                <div class="brand-icon">⌨</div>
+                <div class="brand-icon">K</div>
                 Keystroke Dynamics
             </div>
             <div class="nav-links">
@@ -506,20 +487,17 @@
             <!-- Welcome -->
             <div id="welcomeSection" class="section">
                 <div class="hero">
-                    <div class="badge"><span class="dot"></span> Passwordless Authentication</div>
-                    <h1>Your <span class="gradient-text">typing rhythm</span> is your password</h1>
+                    <div class="badge">Passwordless Authentication</div>
+                    <h1>Your <strong>typing rhythm</strong> is your password</h1>
                     <p>Keystroke Dynamics authenticates you by how you type — no passwords, no tokens, just your natural rhythm.</p>
                     <div class="features">
                         <div class="feature">
-                            <div class="feat-icon fast">⚡</div>
                             <span class="feat-label">Sub-second login</span>
                         </div>
                         <div class="feature">
-                            <div class="feat-icon lock">🔐</div>
                             <span class="feat-label">AES-256 encrypted</span>
                         </div>
                         <div class="feature">
-                            <div class="feat-icon chart">📊</div>
                             <span class="feat-label">95%+ accuracy</span>
                         </div>
                     </div>
@@ -1118,7 +1096,7 @@
             try { window.biometricApp = new DynamicsLoginApp(); }
             catch (error) {
                 console.error('Failed to initialize application:', error);
-                document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;min-height:100vh;flex-direction:column;text-align:center;padding:2rem;font-family:system-ui,sans-serif;"><h1 style="color:#ef4444;margin-bottom:1rem;">Application Error</h1><p style="color:#6b7280;">${error.message}</p><button onclick="location.reload()" style="margin-top:2rem;padding:.75rem 1.5rem;background:#7c3aed;color:white;border:none;border-radius:8px;cursor:pointer;">Reload</button></div>`;
+                document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;min-height:100vh;flex-direction:column;text-align:center;padding:2rem;font-family:system-ui,sans-serif;"><h1 style="color:#ef4444;margin-bottom:1rem;">Application Error</h1><p style="color:#6b7280;">${error.message}</p><button onclick="location.reload()" style="margin-top:2rem;padding:.75rem 1.5rem;background:#3b82f6;color:white;border:none;border-radius:8px;cursor:pointer;">Reload</button></div>`;
             }
         });
 
