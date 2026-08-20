@@ -481,8 +481,8 @@
                 Keystroke Dynamics
             </div>
             <div class="nav-links">
-                <button id="setupBtn" class="nav-btn">Setup</button>
-                <button id="resetBtn" class="nav-btn danger">Reset</button>
+                <button id="setupBtn" class="nav-btn" style="display:none">Setup</button>
+                <button id="resetBtn" class="nav-btn danger" style="display:none">Reset</button>
             </div>
         </nav>
 
@@ -722,9 +722,16 @@
 
             checkSetupStatus() {
                 Promise.resolve(this.biometricSystem.isReady()).then(ready => {
+                    this.updateNavButtons(ready);
                     if (ready) { this.showLoginSection(); }
                     else { this.showWelcomeSection(); }
                 });
+            }
+
+            updateNavButtons(ready) {
+                document.getElementById('setupBtn').style.display = ready ? 'none' : '';
+                document.getElementById('heroSetupBtn').style.display = ready ? 'none' : '';
+                document.getElementById('resetBtn').style.display = ready ? '' : 'none';
             }
 
             showSection(sectionId) {
@@ -907,7 +914,7 @@
                 }
             }
 
-            finishSetup() { this.showStatus('Setup completed successfully! You can now login.', 'success'); this.showLoginSection(); }
+            finishSetup() { this.showStatus('Setup completed successfully! You can now login.', 'success'); this.updateNavButtons(true); this.showLoginSection(); }
 
             resetLoginState() {
                 document.getElementById('loginInput').value = '';
@@ -1025,6 +1032,7 @@
                     this.currentUser = null; this.sampleCount = 0;
                     this.resetTrainingState(); this.resetLoginState();
                     this.showWelcomeSection();
+                    this.updateNavButtons(false);
                     this.showStatus('System reset successful', 'success');
                 } catch (error) {
                     console.error('Reset failed:', error);
