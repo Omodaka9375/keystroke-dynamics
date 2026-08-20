@@ -50,7 +50,7 @@
     },
     "homepage": "https://github.com/Omodaka9375/keystroke-dynamics",
     "engines": {
-        "node": ">=14.0.0"
+        "node": ">=22.0.0"
     },
     "jsdelivr": "keystroke-dynamics.min.js",
     "unpkg": "keystroke-dynamics.min.js",
